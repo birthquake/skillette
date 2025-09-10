@@ -4,13 +4,10 @@ import {
   Square, 
   Play, 
   RotateCcw, 
-  Download,
-  Upload,
   CheckCircle,
   AlertCircle,
   Loader,
   RefreshCw,
-  Maximize2,
   Volume2,
   VolumeX
 } from 'lucide-react';
@@ -20,16 +17,23 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
   const [recordingTime, setRecordingTime] = useState(0);
   const [videoBlob, setVideoBlob] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
-  const [cameraAccess, setCameraAccess] = useState('pending'); // pending, granted, denied, error
+  const [cameraAccess, setCameraAccess] = useState('pending');
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isIOSDevice, setIsIOSDevice] = useState(false);
   
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
+
+  // Detect iOS device
+  useEffect(() => {
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    setIsIOSDevice(iOS);
+  }, []);
 
   // Request camera access on component mount
   useEffect(() => {
@@ -66,18 +70,25 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
 
   const requestCameraAccess = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          width: { ideal: 720 },
-          height: { ideal: 1280 },
+      const constraints = {
+        video: {
           facingMode: 'user'
-        }, 
-        audio: true 
-      });
+        },
+        audio: true
+      };
+
+      if (isIOSDevice) {
+        constraints.video = true;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        if (isIOSDevice) {
+          videoRef.current.play().catch(console.error);
+        }
       }
       setCameraAccess('granted');
     } catch (error) {
@@ -97,36 +108,97 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     }
   };
 
+  const checkMediaRecorderSupport = () => {
+    if (!window.MediaRecorder) {
+      return { supported: false, reason: 'MediaRecorder not supported' };
+    }
+
+    if (isIOSDevice) {
+      const supportedTypes = [
+        'video/mp4',
+        'video/mp4;codecs=h264',
+        'video/webm',
+        'video/webm;codecs=vp8',
+        'video/webm;codecs=vp9'
+      ];
+
+      const workingType = supportedTypes.find(type => 
+        MediaRecorder.isTypeSupported(type)
+      );
+
+      return { 
+        supported: !!workingType, 
+        mimeType: workingType,
+        reason: workingType ? null : 'No supported video formats on iOS'
+      };
+    }
+
+    const preferredTypes = [
+      'video/webm;codecs=vp9',
+      'video/webm;codecs=vp8',
+      'video/webm',
+      'video/mp4'
+    ];
+
+    const workingType = preferredTypes.find(type => 
+      MediaRecorder.isTypeSupported(type)
+    );
+
+    return { 
+      supported: !!workingType, 
+      mimeType: workingType || 'video/webm',
+      reason: null
+    };
+  };
+
   const handleStartRecording = () => {
     if (!streamRef.current) return;
+
+    const support = checkMediaRecorderSupport();
+    
+    if (!support.supported) {
+      alert(`Video recording not supported on this device: ${support.reason}`);
+      return;
+    }
 
     chunksRef.current = [];
     
     try {
-      mediaRecorderRef.current = new MediaRecorder(streamRef.current, {
-        mimeType: 'video/webm;codecs=vp9'
-      });
-    } catch (error) {
-      // Fallback to default codec
-      mediaRecorderRef.current = new MediaRecorder(streamRef.current);
-    }
-
-    mediaRecorderRef.current.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        chunksRef.current.push(event.data);
+      const options = {};
+      if (support.mimeType) {
+        options.mimeType = support.mimeType;
       }
-    };
 
-    mediaRecorderRef.current.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-      setVideoBlob(blob);
-      setVideoUrl(URL.createObjectURL(blob));
-      stopCamera();
-    };
+      mediaRecorderRef.current = new MediaRecorder(streamRef.current, options);
 
-    mediaRecorderRef.current.start();
-    setIsRecording(true);
-    setRecordingTime(0);
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        const mimeType = support.mimeType || 'video/webm';
+        const blob = new Blob(chunksRef.current, { type: mimeType });
+        setVideoBlob(blob);
+        
+        const url = URL.createObjectURL(blob);
+        setVideoUrl(url);
+      };
+
+      mediaRecorderRef.current.onerror = (event) => {
+        console.error('MediaRecorder error:', event.error);
+        alert('Recording failed. Please try again.');
+        setIsRecording(false);
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      alert(`Failed to start recording: ${error.message}`);
+    }
   };
 
   const handleStopRecording = () => {
@@ -157,7 +229,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       if (isPlaying) {
         videoRef.current.pause();
       } else {
-        videoRef.current.play();
+        videoRef.current.play().catch(console.error);
       }
       setIsPlaying(!isPlaying);
     }
@@ -176,7 +248,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Camera access denied
   if (cameraAccess === 'denied') {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -185,8 +256,10 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           Camera Access Needed
         </h3>
         <p style={{ fontSize: '14px', color: '#666666', marginBottom: '20px' }}>
-          Please allow camera access to record your skill demonstration. 
-          You can change this in your browser settings.
+          Please allow camera access to record your skill demonstration.
+          {isIOSDevice && (
+            <><br /><strong>iOS users:</strong> Make sure to tap "Allow" when prompted.</>
+          )}
         </p>
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
           <button className="btn btn-outline" onClick={onCancel}>
@@ -201,7 +274,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     );
   }
 
-  // Camera access error
   if (cameraAccess === 'error') {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -210,7 +282,10 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           Camera Error
         </h3>
         <p style={{ fontSize: '14px', color: '#666666', marginBottom: '20px' }}>
-          We couldn't access your camera. Please check that it's not being used by another app.
+          Camera access failed. 
+          {isIOSDevice && (
+            <><br /><strong>iOS Safari:</strong> Try refreshing the page or using Chrome instead.</>
+          )}
         </p>
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
           <button className="btn btn-outline" onClick={onCancel}>
@@ -225,7 +300,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     );
   }
 
-  // Loading camera
   if (cameraAccess === 'pending') {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -234,7 +308,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           Setting up camera...
         </h3>
         <p style={{ fontSize: '14px', color: '#666666' }}>
-          Please allow camera access when prompted
+          {isIOSDevice ? 'iOS detected - Please allow camera access when prompted' : 'Please allow camera access when prompted'}
         </p>
       </div>
     );
@@ -242,7 +316,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
 
   return (
     <div className="fade-in">
-      {/* Header */}
       <div className="card" style={{ textAlign: 'center', marginBottom: '16px' }}>
         <h2 style={{ 
           fontSize: '20px', 
@@ -256,7 +329,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           Show us how you do: <strong>{skillTitle}</strong>
         </p>
         
-        {/* Recording Timer */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -282,7 +354,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           </span>
         </div>
 
-        {/* Progress Bar */}
         <div style={{
           width: '100%',
           height: '4px',
@@ -297,9 +368,19 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
             transition: 'width 0.3s ease'
           }} />
         </div>
+
+        {isIOSDevice && (
+          <p style={{ 
+            fontSize: '12px', 
+            color: '#ff6b6b', 
+            marginTop: '8px',
+            fontStyle: 'italic'
+          }}>
+            ⚠️ iOS Safari has limited video recording support
+          </p>
+        )}
       </div>
 
-      {/* Video Container */}
       <div style={{
         position: 'relative',
         width: '100%',
@@ -314,6 +395,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           autoPlay
           playsInline
           muted={videoBlob ? isMuted : true}
+          src={videoBlob ? videoUrl : undefined}
           style={{
             width: '100%',
             height: '100%',
@@ -324,7 +406,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           onEnded={() => setIsPlaying(false)}
         />
 
-        {/* Video Controls Overlay (only for playback) */}
         {videoBlob && (
           <>
             <div 
@@ -353,7 +434,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
               </div>
             </div>
 
-            {/* Video Controls */}
             <div style={{
               position: 'absolute',
               bottom: '12px',
@@ -382,7 +462,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           </>
         )}
 
-        {/* Recording Indicator */}
         {isRecording && (
           <div style={{
             position: 'absolute',
@@ -410,9 +489,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
         )}
       </div>
 
-      {/* Controls */}
       {!videoBlob ? (
-        // Recording Controls
         <div style={{ display: 'flex', gap: '12px' }}>
           <button 
             className="btn btn-outline"
@@ -442,7 +519,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           </button>
         </div>
       ) : (
-        // Playback Controls
         <div>
           <div style={{ 
             display: 'flex', 
@@ -468,7 +544,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
             </button>
           </div>
 
-          {/* Video Info */}
           <div className="card" style={{ 
             background: '#f8fafc',
             padding: '12px',
@@ -484,7 +559,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
         </div>
       )}
 
-      {/* Tips */}
       {!videoBlob && !isRecording && (
         <div className="card" style={{ 
           background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
@@ -505,6 +579,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
             <li>Demonstrate the skill clearly</li>
             <li>Speak while you demonstrate</li>
             <li>Maximum {maxDuration} seconds</li>
+            {isIOSDevice && <li><strong>iOS:</strong> Try Chrome if Safari has issues</li>}
           </ul>
         </div>
       )}
