@@ -232,6 +232,7 @@ export const AuthProvider = ({ children }) => {
     
     // Auth functions
     signIn,
+    signUp,
     signOut,
     
     // Profile functions
