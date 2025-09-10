@@ -420,6 +420,30 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
             REC
           </div>
         )}
+
+        {/* Camera Switch Button */}
+        {streamReady && videoLoaded && !isRecording && (
+          <button
+            onClick={switchCamera}
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              width: '40px',
+              height: '40px',
+              background: 'rgba(0,0,0,0.7)',
+              border: 'none',
+              borderRadius: '50%',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <RotateCw size={20} />
+          </button>
+        )}
       </div>
 
       {!videoBlob ? (
