@@ -216,7 +216,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       return;
     }
 
-    console.log('Starting recording with:', support.mimeType);
+    console.log('Starting recording with:', support.mimeType, 'Audio supported:', support.audioSupported !== false);
     chunksRef.current = [];
     
     try {
@@ -225,7 +225,18 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
         options.mimeType = support.mimeType;
       }
 
-      mediaRecorderRef.current = new MediaRecorder(streamRef.current, options);
+      // For iOS, try video-only stream if audio is problematic
+      let recordingStream = streamRef.current;
+      if (isIOSDevice && support.audioSupported === false) {
+        // Create video-only stream for recording
+        const videoTrack = streamRef.current.getVideoTracks()[0];
+        if (videoTrack) {
+          recordingStream = new MediaStream([videoTrack]);
+          console.log('Using video-only stream for iOS recording');
+        }
+      }
+
+      mediaRecorderRef.current = new MediaRecorder(recordingStream, options);
 
       mediaRecorderRef.current.ondataavailable = (event) => {
         console.log('Recording data available:', event.data.size);
