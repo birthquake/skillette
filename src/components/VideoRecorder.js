@@ -22,6 +22,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
   const [isMuted, setIsMuted] = useState(false);
   const [isIOSDevice, setIsIOSDevice] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [streamReady, setStreamReady] = useState(false);
   
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -34,6 +35,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     setIsIOSDevice(iOS);
+    console.log('Device detection - iOS:', iOS);
   }, []);
 
   // Request camera access on component mount
@@ -73,67 +75,130 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     try {
       console.log('Requesting camera access...');
       
-      // Very simple constraints for iOS
-      const constraints = {
-        video: {
-          facingMode: 'user',
-          width: { ideal: 640 },
-          height: { ideal: 480 }
-        },
+      // Minimal constraints for iOS compatibility
+      const constraints = isIOSDevice ? {
+        video: true,
+        audio: false // Start without audio for iOS
+      } : {
+        video: { facingMode: 'user' },
         audio: true
       };
 
-      // Even simpler for iOS
-      if (isIOSDevice) {
-        constraints.video = {
-          facingMode: 'user'
-        };
-      }
+      console.log('Using constraints:', constraints);
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       console.log('Camera access granted, stream:', stream);
+      console.log('Video tracks:', stream.getVideoTracks());
+      console.log('Audio tracks:', stream.getAudioTracks());
       
       streamRef.current = stream;
+      setStreamReady(true);
       
+      // Set up video element with stream
       if (videoRef.current) {
-        console.log('Setting video srcObject...');
-        videoRef.current.srcObject = stream;
+        console.log('Setting up video element...');
         
-        // Force video properties for iOS
+        // Clear any existing source
+        videoRef.current.srcObject = null;
+        videoRef.current.src = '';
+        
+        // Set properties before assigning stream
         videoRef.current.muted = true;
-        videoRef.current.playsInline = true;
         videoRef.current.autoplay = true;
+        videoRef.current.playsInline = true;
         
-        // Listen for video events
-        videoRef.current.onloadedmetadata = () => {
-          console.log('Video metadata loaded');
+        // For iOS, try using URL.createObjectURL as fallback
+        if (isIOSDevice) {
+          try {
+            // Method 1: Direct srcObject assignment
+            videoRef.current.srcObject = stream;
+            console.log('iOS: Set srcObject directly');
+          } catch (error) {
+            console.log('iOS: srcObject failed, trying createObjectURL fallback');
+            // This is deprecated but sometimes works on older iOS
+            try {
+              const url = URL.createObjectURL(stream);
+              videoRef.current.src = url;
+              console.log('iOS: Using createObjectURL fallback');
+            } catch (urlError) {
+              console.error('Both methods failed:', error, urlError);
+            }
+          }
+        } else {
+          videoRef.current.srcObject = stream;
+        }
+        
+        // Add comprehensive event listeners
+        const handleLoadedMetadata = () => {
+          console.log('✅ Video metadata loaded');
+          console.log('Video dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight);
+          console.log('Video ready state:', videoRef.current.readyState);
           setVideoLoaded(true);
-          
-          // Force play on iOS
+        };
+        
+        const handleCanPlay = () => {
+          console.log('✅ Video can play');
+          setVideoLoaded(true);
+          // Force play
           videoRef.current.play().then(() => {
-            console.log('Video playing successfully');
-          }).catch(error => {
-            console.error('Video play failed:', error);
+            console.log('✅ Video playing');
+          }).catch(err => {
+            console.log('❌ Play failed:', err);
           });
         };
-
-        videoRef.current.onloadeddata = () => {
-          console.log('Video data loaded');
-        };
-
-        videoRef.current.oncanplay = () => {
-          console.log('Video can play');
-        };
-
-        videoRef.current.onerror = (e) => {
-          console.error('Video element error:', e);
+        
+        const handleLoadedData = () => {
+          console.log('✅ Video data loaded');
+          setVideoLoaded(true);
         };
         
-        // Trigger load
-        videoRef.current.load();
+        const handleError = (e) => {
+          console.error('❌ Video error:', e);
+          console.error('Video error details:', videoRef.current.error);
+        };
+        
+        const handleLoadStart = () => {
+          console.log('Video load started');
+        };
+        
+        videoRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
+        videoRef.current.addEventListener('canplay', handleCanPlay);
+        videoRef.current.addEventListener('loadeddata', handleLoadedData);
+        videoRef.current.addEventListener('error', handleError);
+        videoRef.current.addEventListener('loadstart', handleLoadStart);
+        
+        // Clean up listeners
+        const currentVideo = videoRef.current;
+        return () => {
+          if (currentVideo) {
+            currentVideo.removeEventListener('loadedmetadata', handleLoadedMetadata);
+            currentVideo.removeEventListener('canplay', handleCanPlay);
+            currentVideo.removeEventListener('loadeddata', handleLoadedData);
+            currentVideo.removeEventListener('error', handleError);
+            currentVideo.removeEventListener('loadstart', handleLoadStart);
+          }
+        };
       }
       
       setCameraAccess('granted');
+      
+      // Force video load after a short delay
+      setTimeout(() => {
+        if (videoRef.current && !videoLoaded) {
+          console.log('Force loading video...');
+          videoRef.current.load();
+          
+          // Try play after another delay
+          setTimeout(() => {
+            if (videoRef.current) {
+              videoRef.current.play().catch(err => {
+                console.log('Delayed play failed:', err);
+              });
+            }
+          }, 500);
+        }
+      }, 100);
+      
     } catch (error) {
       console.error('Camera access error:', error);
       if (error.name === 'NotAllowedError') {
@@ -155,52 +220,10 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
+      videoRef.current.src = '';
     }
     setVideoLoaded(false);
-  };
-
-  const checkMediaRecorderSupport = () => {
-    if (!window.MediaRecorder) {
-      return { supported: false, reason: 'MediaRecorder not supported' };
-    }
-
-    if (isIOSDevice) {
-      const supportedTypes = [
-        'video/mp4',
-        'video/mp4;codecs=h264',
-        'video/webm',
-        'video/webm;codecs=vp8'
-      ];
-
-      const workingType = supportedTypes.find(type => 
-        MediaRecorder.isTypeSupported(type)
-      );
-
-      console.log('iOS MediaRecorder support check:', { workingType, supportedTypes });
-
-      return { 
-        supported: !!workingType, 
-        mimeType: workingType,
-        reason: workingType ? null : 'No supported video formats on iOS'
-      };
-    }
-
-    const preferredTypes = [
-      'video/webm;codecs=vp9',
-      'video/webm;codecs=vp8',
-      'video/webm',
-      'video/mp4'
-    ];
-
-    const workingType = preferredTypes.find(type => 
-      MediaRecorder.isTypeSupported(type)
-    );
-
-    return { 
-      supported: !!workingType, 
-      mimeType: workingType || 'video/webm',
-      reason: null
-    };
+    setStreamReady(false);
   };
 
   const handleStartRecording = () => {
@@ -209,34 +232,15 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       return;
     }
 
-    const support = checkMediaRecorderSupport();
-    
-    if (!support.supported) {
-      alert(`Video recording not supported: ${support.reason}`);
-      return;
-    }
-
-    console.log('Starting recording with:', support.mimeType, 'Audio supported:', support.audioSupported !== false);
+    // Simple recording for iOS - no codec specification
+    console.log('Starting recording...');
     chunksRef.current = [];
     
     try {
+      // Use minimal options for iOS compatibility
       const options = {};
-      if (support.mimeType) {
-        options.mimeType = support.mimeType;
-      }
-
-      // For iOS, try video-only stream if audio is problematic
-      let recordingStream = streamRef.current;
-      if (isIOSDevice && support.audioSupported === false) {
-        // Create video-only stream for recording
-        const videoTrack = streamRef.current.getVideoTracks()[0];
-        if (videoTrack) {
-          recordingStream = new MediaStream([videoTrack]);
-          console.log('Using video-only stream for iOS recording');
-        }
-      }
-
-      mediaRecorderRef.current = new MediaRecorder(recordingStream, options);
+      
+      mediaRecorderRef.current = new MediaRecorder(streamRef.current, options);
 
       mediaRecorderRef.current.ondataavailable = (event) => {
         console.log('Recording data available:', event.data.size);
@@ -247,14 +251,13 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
 
       mediaRecorderRef.current.onstop = () => {
         console.log('Recording stopped, creating blob...');
-        const mimeType = support.mimeType || 'video/webm';
-        const blob = new Blob(chunksRef.current, { type: mimeType });
+        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
         console.log('Video blob created:', blob.size, 'bytes');
         setVideoBlob(blob);
         
         const url = URL.createObjectURL(blob);
         setVideoUrl(url);
-        console.log('Video URL created:', url);
+        console.log('Video URL created for playback');
       };
 
       mediaRecorderRef.current.onerror = (event) => {
@@ -266,10 +269,10 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       mediaRecorderRef.current.start();
       setIsRecording(true);
       setRecordingTime(0);
-      console.log('Recording started');
+      console.log('Recording started successfully');
     } catch (error) {
       console.error('Failed to start recording:', error);
-      alert(`Failed to start recording: ${error.message}`);
+      alert(`Recording failed: ${error.message}`);
     }
   };
 
@@ -297,24 +300,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     }
   };
 
-  const togglePlayback = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play().catch(console.error);
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -330,19 +315,11 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
         </h3>
         <p style={{ fontSize: '14px', color: '#666666', marginBottom: '20px' }}>
           Please allow camera access to record your skill demonstration.
-          {isIOSDevice && (
-            <><br /><strong>iOS users:</strong> Make sure to tap "Allow" when prompted.</>
-          )}
         </p>
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-          <button className="btn btn-outline" onClick={onCancel}>
-            Cancel
-          </button>
-          <button className="btn btn-primary" onClick={requestCameraAccess}>
-            <RefreshCw size={16} />
-            Try Again
-          </button>
-        </div>
+        <button className="btn btn-primary" onClick={requestCameraAccess}>
+          <RefreshCw size={16} />
+          Try Again
+        </button>
       </div>
     );
   }
@@ -355,20 +332,12 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           Camera Error
         </h3>
         <p style={{ fontSize: '14px', color: '#666666', marginBottom: '20px' }}>
-          Camera access failed. 
-          {isIOSDevice && (
-            <><br /><strong>iOS Safari:</strong> Try refreshing the page or using Chrome instead.</>
-          )}
+          Unable to access camera. Please check permissions and try again.
         </p>
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-          <button className="btn btn-outline" onClick={onCancel}>
-            Cancel
-          </button>
-          <button className="btn btn-primary" onClick={requestCameraAccess}>
-            <RefreshCw size={16} />
-            Try Again
-          </button>
-        </div>
+        <button className="btn btn-primary" onClick={requestCameraAccess}>
+          <RefreshCw size={16} />
+          Try Again
+        </button>
       </div>
     );
   }
@@ -381,7 +350,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           Setting up camera...
         </h3>
         <p style={{ fontSize: '14px', color: '#666666' }}>
-          {isIOSDevice ? 'iOS detected - Please allow camera access when prompted' : 'Please allow camera access when prompted'}
+          Please allow camera access when prompted
         </p>
       </div>
     );
@@ -427,31 +396,14 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           </span>
         </div>
 
-        <div style={{
-          width: '100%',
-          height: '4px',
-          background: '#e2e8f0',
-          borderRadius: '2px',
-          overflow: 'hidden'
+        {/* Debug info */}
+        <div style={{ 
+          fontSize: '10px', 
+          color: '#666', 
+          marginTop: '8px'
         }}>
-          <div style={{
-            width: `${(recordingTime / maxDuration) * 100}%`,
-            height: '100%',
-            background: isRecording ? '#ff6b6b' : '#4facfe',
-            transition: 'width 0.3s ease'
-          }} />
+          Stream: {streamReady ? '✅' : '❌'} • Video: {videoLoaded ? '✅' : '❌'} • {isIOSDevice ? 'iOS' : 'Desktop'}
         </div>
-
-        {/* Debug info for troubleshooting */}
-        {isIOSDevice && (
-          <div style={{ 
-            fontSize: '10px', 
-            color: '#666', 
-            marginTop: '8px'
-          }}>
-            iOS • Camera: {cameraAccess} • Video: {videoLoaded ? 'loaded' : 'loading'}
-          </div>
-        )}
       </div>
 
       <div style={{
@@ -461,10 +413,11 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
         background: '#000',
         borderRadius: '16px',
         overflow: 'hidden',
-        marginBottom: '20px'
+        marginBottom: '20px',
+        border: videoLoaded ? '2px solid #4facfe' : '2px solid #ff6b6b'
       }}>
-        {/* Show loading indicator if video not loaded */}
-        {!videoLoaded && !videoBlob && (
+        {/* Show different messages based on state */}
+        {!streamReady && (
           <div style={{
             position: 'absolute',
             top: '50%',
@@ -474,7 +427,22 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
             textAlign: 'center'
           }}>
             <Loader size={32} style={{ animation: 'spin 1s linear infinite', marginBottom: '8px' }} />
-            <div style={{ fontSize: '14px' }}>Loading camera...</div>
+            <div style={{ fontSize: '14px' }}>Connecting to camera...</div>
+          </div>
+        )}
+
+        {streamReady && !videoLoaded && (
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            <AlertCircle size={32} style={{ marginBottom: '8px' }} />
+            <div style={{ fontSize: '14px' }}>Video loading issue</div>
+            <div style={{ fontSize: '12px', marginTop: '4px' }}>Check console for details</div>
           </div>
         )}
 
@@ -488,72 +456,12 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            transform: isIOSDevice ? 'scaleX(-1)' : 'none' // Mirror for iOS front camera
+            display: videoLoaded || videoBlob ? 'block' : 'none'
           }}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           onEnded={() => setIsPlaying(false)}
-          onLoadedMetadata={() => {
-            console.log('Video metadata loaded event');
-            setVideoLoaded(true);
-          }}
         />
-
-        {videoBlob && (
-          <>
-            <div 
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                cursor: 'pointer',
-                opacity: isPlaying ? 0 : 1,
-                transition: 'opacity 0.3s ease'
-              }}
-              onClick={togglePlayback}
-            >
-              <div style={{
-                width: '60px',
-                height: '60px',
-                background: 'rgba(0,0,0,0.7)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white'
-              }}>
-                <Play size={24} />
-              </div>
-            </div>
-
-            <div style={{
-              position: 'absolute',
-              bottom: '12px',
-              right: '12px',
-              display: 'flex',
-              gap: '8px'
-            }}>
-              <button
-                onClick={toggleMute}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  background: 'rgba(0,0,0,0.7)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  color: 'white',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-              </button>
-            </div>
-          </>
-        )}
 
         {isRecording && (
           <div style={{
@@ -595,7 +503,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           <button 
             className="btn btn-primary"
             onClick={isRecording ? handleStopRecording : handleStartRecording}
-            disabled={cameraAccess !== 'granted'}
+            disabled={!streamReady}
             style={{ flex: 2 }}
           >
             {isRecording ? (
@@ -606,7 +514,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
             ) : (
               <>
                 <Camera size={18} />
-                Start Recording
+                {streamReady ? 'Start Recording' : 'Camera Loading...'}
               </>
             )}
           </button>
@@ -636,44 +544,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
               Use This Video
             </button>
           </div>
-
-          <div className="card" style={{ 
-            background: '#f8fafc',
-            padding: '12px',
-            textAlign: 'center'
-          }}>
-            <p style={{ fontSize: '14px', color: '#666666', marginBottom: '4px' }}>
-              Video recorded successfully!
-            </p>
-            <p style={{ fontSize: '12px', color: '#666666' }}>
-              Duration: {formatTime(recordingTime)} • Size: {(videoBlob.size / 1024 / 1024).toFixed(1)}MB
-            </p>
-          </div>
-        </div>
-      )}
-
-      {!videoBlob && !isRecording && (
-        <div className="card" style={{ 
-          background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-          color: 'white',
-          textAlign: 'center',
-          marginTop: '16px'
-        }}>
-          <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>
-            💡 Recording Tips
-          </h4>
-          <ul style={{ 
-            fontSize: '14px',
-            textAlign: 'left',
-            paddingLeft: '20px',
-            lineHeight: '1.5'
-          }}>
-            <li>Make sure you're well-lit</li>
-            <li>Demonstrate the skill clearly</li>
-            <li>Speak while you demonstrate</li>
-            <li>Maximum {maxDuration} seconds</li>
-            {isIOSDevice && <li><strong>iOS:</strong> Try Chrome if Safari has issues</li>}
-          </ul>
         </div>
       )}
     </div>
