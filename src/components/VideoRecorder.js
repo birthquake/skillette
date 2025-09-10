@@ -94,6 +94,9 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       streamRef.current = stream;
       setStreamReady(true);
       
+      console.log('Stream ready, checking video element...');
+      console.log('videoRef.current:', videoRef.current);
+      
       // Set up video element with stream
       if (videoRef.current) {
         console.log('Setting up video element...');
