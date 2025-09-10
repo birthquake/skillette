@@ -21,6 +21,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isIOSDevice, setIsIOSDevice] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
   
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -70,26 +71,68 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
 
   const requestCameraAccess = async () => {
     try {
+      console.log('Requesting camera access...');
+      
+      // Very simple constraints for iOS
       const constraints = {
         video: {
-          facingMode: 'user'
+          facingMode: 'user',
+          width: { ideal: 640 },
+          height: { ideal: 480 }
         },
         audio: true
       };
 
+      // Even simpler for iOS
       if (isIOSDevice) {
-        constraints.video = true;
+        constraints.video = {
+          facingMode: 'user'
+        };
       }
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log('Camera access granted, stream:', stream);
       
       streamRef.current = stream;
+      
       if (videoRef.current) {
+        console.log('Setting video srcObject...');
         videoRef.current.srcObject = stream;
-        if (isIOSDevice) {
-          videoRef.current.play().catch(console.error);
-        }
+        
+        // Force video properties for iOS
+        videoRef.current.muted = true;
+        videoRef.current.playsInline = true;
+        videoRef.current.autoplay = true;
+        
+        // Listen for video events
+        videoRef.current.onloadedmetadata = () => {
+          console.log('Video metadata loaded');
+          setVideoLoaded(true);
+          
+          // Force play on iOS
+          videoRef.current.play().then(() => {
+            console.log('Video playing successfully');
+          }).catch(error => {
+            console.error('Video play failed:', error);
+          });
+        };
+
+        videoRef.current.onloadeddata = () => {
+          console.log('Video data loaded');
+        };
+
+        videoRef.current.oncanplay = () => {
+          console.log('Video can play');
+        };
+
+        videoRef.current.onerror = (e) => {
+          console.error('Video element error:', e);
+        };
+        
+        // Trigger load
+        videoRef.current.load();
       }
+      
       setCameraAccess('granted');
     } catch (error) {
       console.error('Camera access error:', error);
@@ -102,10 +145,18 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
   };
 
   const stopCamera = () => {
+    console.log('Stopping camera...');
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach(track => {
+        console.log('Stopping track:', track.kind);
+        track.stop();
+      });
       streamRef.current = null;
     }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setVideoLoaded(false);
   };
 
   const checkMediaRecorderSupport = () => {
@@ -118,13 +169,14 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
         'video/mp4',
         'video/mp4;codecs=h264',
         'video/webm',
-        'video/webm;codecs=vp8',
-        'video/webm;codecs=vp9'
+        'video/webm;codecs=vp8'
       ];
 
       const workingType = supportedTypes.find(type => 
         MediaRecorder.isTypeSupported(type)
       );
+
+      console.log('iOS MediaRecorder support check:', { workingType, supportedTypes });
 
       return { 
         supported: !!workingType, 
@@ -152,15 +204,19 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
   };
 
   const handleStartRecording = () => {
-    if (!streamRef.current) return;
+    if (!streamRef.current) {
+      alert('Camera not ready. Please try again.');
+      return;
+    }
 
     const support = checkMediaRecorderSupport();
     
     if (!support.supported) {
-      alert(`Video recording not supported on this device: ${support.reason}`);
+      alert(`Video recording not supported: ${support.reason}`);
       return;
     }
 
+    console.log('Starting recording with:', support.mimeType);
     chunksRef.current = [];
     
     try {
@@ -172,18 +228,22 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       mediaRecorderRef.current = new MediaRecorder(streamRef.current, options);
 
       mediaRecorderRef.current.ondataavailable = (event) => {
+        console.log('Recording data available:', event.data.size);
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
         }
       };
 
       mediaRecorderRef.current.onstop = () => {
+        console.log('Recording stopped, creating blob...');
         const mimeType = support.mimeType || 'video/webm';
         const blob = new Blob(chunksRef.current, { type: mimeType });
+        console.log('Video blob created:', blob.size, 'bytes');
         setVideoBlob(blob);
         
         const url = URL.createObjectURL(blob);
         setVideoUrl(url);
+        console.log('Video URL created:', url);
       };
 
       mediaRecorderRef.current.onerror = (event) => {
@@ -195,6 +255,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       mediaRecorderRef.current.start();
       setIsRecording(true);
       setRecordingTime(0);
+      console.log('Recording started');
     } catch (error) {
       console.error('Failed to start recording:', error);
       alert(`Failed to start recording: ${error.message}`);
@@ -203,6 +264,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
 
   const handleStopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
+      console.log('Stopping recording...');
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
@@ -369,15 +431,15 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           }} />
         </div>
 
+        {/* Debug info for troubleshooting */}
         {isIOSDevice && (
-          <p style={{ 
-            fontSize: '12px', 
-            color: '#ff6b6b', 
-            marginTop: '8px',
-            fontStyle: 'italic'
+          <div style={{ 
+            fontSize: '10px', 
+            color: '#666', 
+            marginTop: '8px'
           }}>
-            ⚠️ iOS Safari has limited video recording support
-          </p>
+            iOS • Camera: {cameraAccess} • Video: {videoLoaded ? 'loaded' : 'loading'}
+          </div>
         )}
       </div>
 
@@ -390,6 +452,21 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
         overflow: 'hidden',
         marginBottom: '20px'
       }}>
+        {/* Show loading indicator if video not loaded */}
+        {!videoLoaded && !videoBlob && (
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            <Loader size={32} style={{ animation: 'spin 1s linear infinite', marginBottom: '8px' }} />
+            <div style={{ fontSize: '14px' }}>Loading camera...</div>
+          </div>
+        )}
+
         <video
           ref={videoRef}
           autoPlay
@@ -399,11 +476,16 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           style={{
             width: '100%',
             height: '100%',
-            objectFit: 'cover'
+            objectFit: 'cover',
+            transform: isIOSDevice ? 'scaleX(-1)' : 'none' // Mirror for iOS front camera
           }}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           onEnded={() => setIsPlaying(false)}
+          onLoadedMetadata={() => {
+            console.log('Video metadata loaded event');
+            setVideoLoaded(true);
+          }}
         />
 
         {videoBlob && (
