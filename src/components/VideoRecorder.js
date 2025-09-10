@@ -167,17 +167,19 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
         videoRef.current.addEventListener('error', handleError);
         videoRef.current.addEventListener('loadstart', handleLoadStart);
         
-        // Clean up listeners
-        const currentVideo = videoRef.current;
-        return () => {
-          if (currentVideo) {
-            currentVideo.removeEventListener('loadedmetadata', handleLoadedMetadata);
-            currentVideo.removeEventListener('canplay', handleCanPlay);
-            currentVideo.removeEventListener('loadeddata', handleLoadedData);
-            currentVideo.removeEventListener('error', handleError);
-            currentVideo.removeEventListener('loadstart', handleLoadStart);
+        // Clean up listeners function (but don't call it here)
+        const cleanupListeners = () => {
+          if (videoRef.current) {
+            videoRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata);
+            videoRef.current.removeEventListener('canplay', handleCanPlay);
+            videoRef.current.removeEventListener('loadeddata', handleLoadedData);
+            videoRef.current.removeEventListener('error', handleError);
+            videoRef.current.removeEventListener('loadstart', handleLoadStart);
           }
         };
+        
+        // Store cleanup function for later use
+        videoRef.current.cleanupListeners = cleanupListeners;
       }
       
       setCameraAccess('granted');
