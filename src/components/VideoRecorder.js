@@ -7,9 +7,7 @@ import {
   CheckCircle,
   AlertCircle,
   Loader,
-  RefreshCw,
-  Volume2,
-  VolumeX
+  RefreshCw
 } from 'lucide-react';
 
 function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = "Your Skill" }) {
@@ -19,8 +17,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
   const [videoUrl, setVideoUrl] = useState(null);
   const [cameraAccess, setCameraAccess] = useState('pending');
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isIOSDevice, setIsIOSDevice] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [streamReady, setStreamReady] = useState(false);
   
@@ -30,14 +26,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
 
-  // Detect iOS device
-  useEffect(() => {
-    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    setIsIOSDevice(iOS);
-    console.log('Device detection - iOS:', iOS);
-  }, []);
-
   // Request camera access on component mount
   useEffect(() => {
     requestCameraAccess();
@@ -45,6 +33,14 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       stopCamera();
     };
   }, []);
+
+  // Set up video when both stream and element are ready
+  useEffect(() => {
+    if (streamReady && videoRef.current && !videoLoaded) {
+      console.log('Both stream and video element ready - setting up video...');
+      setupVideoElement();
+    }
+  }, [streamReady, videoLoaded]);
 
   // Recording timer
   useEffect(() => {
@@ -75,11 +71,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     try {
       console.log('Requesting camera access...');
       
-      // Minimal constraints for iOS compatibility
-      const constraints = isIOSDevice ? {
-        video: true,
-        audio: false // Start without audio for iOS
-      } : {
+      const constraints = {
         video: { facingMode: 'user' },
         audio: true
       };
@@ -88,103 +80,9 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       console.log('Camera access granted, stream:', stream);
-      console.log('Video tracks:', stream.getVideoTracks());
-      console.log('Audio tracks:', stream.getAudioTracks());
       
       streamRef.current = stream;
       setStreamReady(true);
-      
-      console.log('Stream ready, checking video element...');
-      console.log('videoRef.current:', videoRef.current);
-      
-      // Set up video element with stream
-      if (videoRef.current) {
-        console.log('Setting up video element...');
-        
-        // Clear any existing source
-        videoRef.current.srcObject = null;
-        videoRef.current.src = '';
-        
-        // Set properties before assigning stream
-        videoRef.current.muted = true;
-        videoRef.current.autoplay = true;
-        videoRef.current.playsInline = true;
-        
-        // For iOS, try using URL.createObjectURL as fallback
-        if (isIOSDevice) {
-          try {
-            // Method 1: Direct srcObject assignment
-            videoRef.current.srcObject = stream;
-            console.log('iOS: Set srcObject directly');
-          } catch (error) {
-            console.log('iOS: srcObject failed, trying createObjectURL fallback');
-            // This is deprecated but sometimes works on older iOS
-            try {
-              const url = URL.createObjectURL(stream);
-              videoRef.current.src = url;
-              console.log('iOS: Using createObjectURL fallback');
-            } catch (urlError) {
-              console.error('Both methods failed:', error, urlError);
-            }
-          }
-        } else {
-          videoRef.current.srcObject = stream;
-        }
-        
-        // Add comprehensive event listeners
-        const handleLoadedMetadata = () => {
-          console.log('✅ Video metadata loaded');
-          console.log('Video dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight);
-          console.log('Video ready state:', videoRef.current.readyState);
-          setVideoLoaded(true);
-        };
-        
-        const handleCanPlay = () => {
-          console.log('✅ Video can play');
-          setVideoLoaded(true);
-          // Force play
-          videoRef.current.play().then(() => {
-            console.log('✅ Video playing');
-          }).catch(err => {
-            console.log('❌ Play failed:', err);
-          });
-        };
-        
-        const handleLoadedData = () => {
-          console.log('✅ Video data loaded');
-          setVideoLoaded(true);
-        };
-        
-        const handleError = (e) => {
-          console.error('❌ Video error:', e);
-          console.error('Video error details:', videoRef.current.error);
-        };
-        
-        const handleLoadStart = () => {
-          console.log('Video load started');
-        };
-        
-        videoRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
-        videoRef.current.addEventListener('canplay', handleCanPlay);
-        videoRef.current.addEventListener('loadeddata', handleLoadedData);
-        videoRef.current.addEventListener('error', handleError);
-        videoRef.current.addEventListener('loadstart', handleLoadStart);
-        
-        // Clean up listeners function (but don't call it here)
-        const cleanupListeners = () => {
-          if (videoRef.current) {
-            videoRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata);
-            videoRef.current.removeEventListener('canplay', handleCanPlay);
-            videoRef.current.removeEventListener('loadeddata', handleLoadedData);
-            videoRef.current.removeEventListener('error', handleError);
-            videoRef.current.removeEventListener('loadstart', handleLoadStart);
-          }
-        };
-        
-        // Store cleanup function for later use
-        videoRef.current.cleanupListeners = cleanupListeners;
-      }
-      
       setCameraAccess('granted');
       
     } catch (error) {
@@ -197,18 +95,82 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     }
   };
 
+  const setupVideoElement = () => {
+    if (!videoRef.current || !streamRef.current) {
+      console.log('Video element or stream not ready');
+      return;
+    }
+
+    console.log('Setting up video element...');
+    
+    const video = videoRef.current;
+    const stream = streamRef.current;
+
+    // Set video properties
+    video.muted = true;
+    video.autoplay = true;
+    video.playsInline = true;
+
+    // Add event listeners
+    const handleLoadedMetadata = () => {
+      console.log('✅ Video metadata loaded');
+      console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+      setVideoLoaded(true);
+    };
+
+    const handleCanPlay = () => {
+      console.log('✅ Video can play');
+      setVideoLoaded(true);
+    };
+
+    const handleLoadedData = () => {
+      console.log('✅ Video data loaded');
+      setVideoLoaded(true);
+    };
+
+    const handleError = (e) => {
+      console.error('❌ Video error:', e);
+    };
+
+    const handleLoadStart = () => {
+      console.log('Video load started');
+    };
+
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('loadeddata', handleLoadedData);
+    video.addEventListener('error', handleError);
+    video.addEventListener('loadstart', handleLoadStart);
+
+    // Assign stream to video
+    try {
+      video.srcObject = stream;
+      console.log('Stream assigned to video element');
+      
+      // Force load and play
+      video.load();
+      
+      setTimeout(() => {
+        video.play().then(() => {
+          console.log('✅ Video playing');
+        }).catch(err => {
+          console.log('❌ Play failed:', err);
+        });
+      }, 100);
+      
+    } catch (error) {
+      console.error('Failed to assign stream to video:', error);
+    }
+  };
+
   const stopCamera = () => {
     console.log('Stopping camera...');
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => {
-        console.log('Stopping track:', track.kind);
-        track.stop();
-      });
+      streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
-      videoRef.current.src = '';
     }
     setVideoLoaded(false);
     setStreamReady(false);
@@ -220,18 +182,13 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       return;
     }
 
-    // Simple recording for iOS - no codec specification
     console.log('Starting recording...');
     chunksRef.current = [];
     
     try {
-      // Use minimal options for iOS compatibility
-      const options = {};
-      
-      mediaRecorderRef.current = new MediaRecorder(streamRef.current, options);
+      mediaRecorderRef.current = new MediaRecorder(streamRef.current);
 
       mediaRecorderRef.current.ondataavailable = (event) => {
-        console.log('Recording data available:', event.data.size);
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
         }
@@ -240,12 +197,11 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       mediaRecorderRef.current.onstop = () => {
         console.log('Recording stopped, creating blob...');
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-        console.log('Video blob created:', blob.size, 'bytes');
         setVideoBlob(blob);
         
         const url = URL.createObjectURL(blob);
         setVideoUrl(url);
-        console.log('Video URL created for playback');
+        console.log('Video blob created for playback');
       };
 
       mediaRecorderRef.current.onerror = (event) => {
@@ -257,7 +213,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       mediaRecorderRef.current.start();
       setIsRecording(true);
       setRecordingTime(0);
-      console.log('Recording started successfully');
+      
     } catch (error) {
       console.error('Failed to start recording:', error);
       alert(`Recording failed: ${error.message}`);
@@ -266,7 +222,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
 
   const handleStopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
-      console.log('Stopping recording...');
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
@@ -279,6 +234,8 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     if (videoUrl) {
       URL.revokeObjectURL(videoUrl);
     }
+    // Restart camera
+    setVideoLoaded(false);
     requestCameraAccess();
   };
 
@@ -390,7 +347,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           color: '#666', 
           marginTop: '8px'
         }}>
-          Stream: {streamReady ? '✅' : '❌'} • Video: {videoLoaded ? '✅' : '❌'} • {isIOSDevice ? 'iOS' : 'Desktop'}
+          Stream: {streamReady ? '✅' : '❌'} • Video: {videoLoaded ? '✅' : '❌'}
         </div>
       </div>
 
@@ -404,8 +361,8 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
         marginBottom: '20px',
         border: videoLoaded ? '2px solid #4facfe' : '2px solid #ff6b6b'
       }}>
-        {/* Show different messages based on state */}
-        {!streamReady && (
+        {/* Show loading message if not ready */}
+        {(!streamReady || !videoLoaded) && !videoBlob && (
           <div style={{
             position: 'absolute',
             top: '50%',
@@ -415,22 +372,9 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
             textAlign: 'center'
           }}>
             <Loader size={32} style={{ animation: 'spin 1s linear infinite', marginBottom: '8px' }} />
-            <div style={{ fontSize: '14px' }}>Connecting to camera...</div>
-          </div>
-        )}
-
-        {streamReady && !videoLoaded && (
-          <div style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            color: 'white',
-            textAlign: 'center'
-          }}>
-            <AlertCircle size={32} style={{ marginBottom: '8px' }} />
-            <div style={{ fontSize: '14px' }}>Video loading issue</div>
-            <div style={{ fontSize: '12px', marginTop: '4px' }}>Check console for details</div>
+            <div style={{ fontSize: '14px' }}>
+              {!streamReady ? 'Getting camera...' : 'Loading video...'}
+            </div>
           </div>
         )}
 
@@ -438,7 +382,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           ref={videoRef}
           autoPlay
           playsInline
-          muted={videoBlob ? isMuted : true}
+          muted={videoBlob ? false : true}
           src={videoBlob ? videoUrl : undefined}
           style={{
             width: '100%',
@@ -491,7 +435,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           <button 
             className="btn btn-primary"
             onClick={isRecording ? handleStopRecording : handleStartRecording}
-            disabled={!streamReady}
+            disabled={!streamReady || !videoLoaded}
             style={{ flex: 2 }}
           >
             {isRecording ? (
@@ -502,7 +446,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
             ) : (
               <>
                 <Camera size={18} />
-                {streamReady ? 'Start Recording' : 'Camera Loading...'}
+                {streamReady && videoLoaded ? 'Start Recording' : 'Loading...'}
               </>
             )}
           </button>
