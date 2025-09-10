@@ -187,23 +187,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       
       setCameraAccess('granted');
       
-      // Force video load after a short delay
-      setTimeout(() => {
-        if (videoRef.current && !videoLoaded) {
-          console.log('Force loading video...');
-          videoRef.current.load();
-          
-          // Try play after another delay
-          setTimeout(() => {
-            if (videoRef.current) {
-              videoRef.current.play().catch(err => {
-                console.log('Delayed play failed:', err);
-              });
-            }
-          }, 500);
-        }
-      }, 100);
-      
     } catch (error) {
       console.error('Camera access error:', error);
       if (error.name === 'NotAllowedError') {
