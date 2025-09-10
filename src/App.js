@@ -1,39 +1,48 @@
 import React, { useState, useEffect } from 'react';
-import { Home, RotateCcw, Camera, Clock, User, Flame, Trophy, Star } from 'lucide-react';
+import { Home, RotateCcw, Camera, Clock, User, Flame, Trophy, Star, Loader } from 'lucide-react';
 import './App.css';
 
-// Import components (we'll create these next)
+// Import Firebase context
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+
+// Import components
+import LoginScreen from './components/Login';
 import HomeScreen from './components/Home';
 import RouletteScreen from './components/Roulette';
 import ChallengeScreen from './components/Challenge';
 import ProfileScreen from './components/Profile';
 
-function App() {
-  // Main app state
-  const [currentScreen, setCurrentScreen] = useState('home');
-  const [user, setUser] = useState({
-    name: 'Alex',
-    streak: 7,
-    skillsLearned: 23,
-    skillsTaught: 19,
-    level: 5,
-    avatar: '👤'
-  });
+// Main App Component (inside AuthProvider)
+function AppContent() {
+  const { 
+    currentUser, 
+    userProfile, 
+    loading, 
+    isAuthenticated, 
+    getUserDisplayData,
+    incrementSkillsLearned,
+    updateStreak 
+  } = useAuth();
   
+  // App state
+  const [currentScreen, setCurrentScreen] = useState('home');
   const [currentChallenge, setCurrentChallenge] = useState(null);
   const [appLoaded, setAppLoaded] = useState(false);
 
-  // Initialize app
+  // Get user display data for compatibility with existing components
+  const user = getUserDisplayData();
+
+  // Initialize app after auth loads
   useEffect(() => {
-    // Simulate app loading
-    const timer = setTimeout(() => {
-      setAppLoaded(true);
-    }, 1000);
+    if (!loading) {
+      const timer = setTimeout(() => {
+        setAppLoaded(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Mock data for development
+  // Mock data for development (will be replaced with Firebase data later)
   const mockSkills = [
     {
       id: 1,
@@ -81,7 +90,6 @@ function App() {
       thumbnail: "🃏"
     }
   ];
-
   // Navigation handler
   const navigateToScreen = (screen) => {
     setCurrentScreen(screen);
@@ -100,20 +108,27 @@ function App() {
   };
 
   // Complete challenge
-  const completeChallenge = () => {
-    if (currentChallenge) {
-      setUser(prev => ({
-        ...prev,
-        skillsLearned: prev.skillsLearned + 1,
-        streak: prev.streak + 1
-      }));
-      setCurrentChallenge(null);
-      setCurrentScreen('home');
+  const completeChallenge = async () => {
+    if (currentChallenge && isAuthenticated) {
+      try {
+        // Update user stats in Firebase
+        await incrementSkillsLearned();
+        await updateStreak();
+        
+        // Clear challenge
+        setCurrentChallenge(null);
+        setCurrentScreen('home');
+      } catch (error) {
+        console.error('Error completing challenge:', error);
+        // Still clear challenge on error
+        setCurrentChallenge(null);
+        setCurrentScreen('home');
+      }
     }
   };
 
-  // Loading screen
-  if (!appLoaded) {
+  // Show loading screen while Firebase initializes
+  if (loading || !appLoaded) {
     return (
       <div className="App">
         <div style={{
@@ -136,11 +151,21 @@ function App() {
             Skillette
           </h1>
           <p style={{ fontSize: '16px', opacity: 0.8 }}>
-            Loading your skill adventure...
+            {loading ? 'Connecting...' : 'Loading your skill adventure...'}
           </p>
+          {loading && (
+            <div style={{ marginTop: '20px' }}>
+              <Loader size={24} style={{ animation: 'spin 1s linear infinite' }} />
+            </div>
+          )}
         </div>
       </div>
     );
+  }
+
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return <LoginScreen />;
   }
 
   // Render current screen
@@ -174,7 +199,7 @@ function App() {
         return (
           <ProfileScreen 
             user={user}
-            setUser={setUser}
+            userProfile={userProfile}
             onNavigate={navigateToScreen}
           />
         );
@@ -188,8 +213,7 @@ function App() {
         );
     }
   };
-
-  return (
+return (
     <div className="App">
       {/* Top Navigation Bar */}
       <nav className="nav-bar">
@@ -261,6 +285,15 @@ function App() {
         </div>
       </nav>
     </div>
+  );
+}
+
+// Main App component with AuthProvider wrapper
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
