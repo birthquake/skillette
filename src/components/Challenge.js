@@ -15,14 +15,15 @@ import {
   RefreshCw,
   Zap
 } from 'lucide-react';
+import VideoRecorder from './VideoRecorder';
 
 function ChallengeScreen({ challenge, onComplete, onNavigate }) {
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [challengeStatus, setChallengeStatus] = useState('active'); // active, recording, submitted, completed
   const [videoBlob, setVideoBlob] = useState(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
+  const [videoUrl, setVideoUrl] = useState(null);
   const [showInstructions, setShowInstructions] = useState(true);
+  const [showVideoRecorder, setShowVideoRecorder] = useState(false);
   
   // Calculate time remaining
   useEffect(() => {
@@ -47,20 +48,6 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
     return () => clearInterval(interval);
   }, [challenge]);
 
-  // Recording timer
-  useEffect(() => {
-    let interval;
-    if (isRecording) {
-      interval = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
-    } else {
-      setRecordingTime(0);
-    }
-    
-    return () => clearInterval(interval);
-  }, [isRecording]);
-
   // Format time display
   const formatTime = (milliseconds) => {
     const hours = Math.floor(milliseconds / (1000 * 60 * 60));
@@ -76,12 +63,6 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
     }
   };
 
-  const formatRecordingTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const getTimeColor = () => {
     if (!timeRemaining) return '#ff6b6b';
     const hoursLeft = timeRemaining / (1000 * 60 * 60);
@@ -91,16 +72,19 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
   };
 
   const handleStartRecording = () => {
-    setIsRecording(true);
-    setChallengeStatus('recording');
+    setShowVideoRecorder(true);
     setShowInstructions(false);
   };
 
-  const handleStopRecording = () => {
-    setIsRecording(false);
+  const handleVideoReady = (blob, url) => {
+    setVideoBlob(blob);
+    setVideoUrl(url);
+    setShowVideoRecorder(false);
     setChallengeStatus('submitted');
-    // Mock video blob creation
-    setVideoBlob(new Blob(['mock video data'], { type: 'video/mp4' }));
+  };
+
+  const handleCancelRecording = () => {
+    setShowVideoRecorder(false);
   };
 
   const handleSubmitProof = () => {
@@ -110,6 +94,14 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
     }, 2000);
   };
 
+  const handleRetake = () => {
+    setChallengeStatus('active');
+    setVideoBlob(null);
+    setVideoUrl(null);
+    if (videoUrl) {
+      URL.revokeObjectURL(videoUrl);
+    }
+  };
   // No active challenge
   if (!challenge) {
     return (
@@ -206,7 +198,7 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
     );
   }
 
-  // Main challenge interface
+  // Main challenge interface starts here
   return (
     <div className="fade-in" style={{ paddingTop: '20px', paddingBottom: '20px' }}>
       {/* Challenge Header */}
@@ -283,8 +275,7 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
           </div>
         </div>
       </div>
-
-      {/* Skill to Learn */}
+{/* Skill to Learn */}
       <div className="card">
         <div className="card-header">
           <div>
@@ -393,130 +384,109 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
       )}
 
       {/* Recording Interface */}
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <h2 className="card-title">📹 Record Your Proof</h2>
-            <p className="card-subtitle">Show that you've mastered the skill</p>
+      {showVideoRecorder ? (
+        <VideoRecorder
+          onVideoReady={handleVideoReady}
+          onCancel={handleCancelRecording}
+          maxDuration={30}
+          skillTitle={challenge.skill?.learnSkill?.title}
+        />
+      ) : (
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <h2 className="card-title">📹 Record Your Proof</h2>
+              <p className="card-subtitle">Show that you've mastered the skill</p>
+            </div>
           </div>
-          {isRecording && (
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px',
-              color: '#ff6b6b'
-            }}>
+
+          {challengeStatus === 'active' && !videoBlob && (
+            <div style={{ textAlign: 'center' }}>
               <div style={{
-                width: '8px',
-                height: '8px',
-                background: '#ff6b6b',
-                borderRadius: '50%',
-                animation: 'pulse 1s infinite'
-              }} />
-              <span style={{ fontSize: '14px', fontWeight: '600' }}>
-                {formatRecordingTime(recordingTime)}
-              </span>
+                width: '200px',
+                height: '300px',
+                background: '#000',
+                borderRadius: '12px',
+                margin: '0 auto 20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontSize: '48px'
+              }}>
+                📱
+              </div>
+              <button 
+                className="btn btn-secondary btn-full"
+                onClick={handleStartRecording}
+              >
+                <Camera size={18} />
+                Start Recording
+              </button>
+            </div>
+          )}
+
+          {challengeStatus === 'submitted' && videoBlob && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '200px',
+                height: '300px',
+                background: '#4ecdc4',
+                borderRadius: '12px',
+                margin: '0 auto 20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontSize: '48px',
+                position: 'relative',
+                overflow: 'hidden'
+              }}>
+                {videoUrl ? (
+                  <video
+                    src={videoUrl}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      borderRadius: '12px'
+                    }}
+                    controls
+                    playsInline
+                  />
+                ) : (
+                  '✅'
+                )}
+              </div>
+              <p style={{ 
+                fontSize: '14px', 
+                color: '#666666',
+                marginBottom: '16px'
+              }}>
+                Great! Your proof video is ready to submit.
+              </p>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button 
+                  className="btn btn-outline"
+                  onClick={handleRetake}
+                  style={{ flex: 1 }}
+                >
+                  <RefreshCw size={18} />
+                  Re-record
+                </button>
+                <button 
+                  className="btn btn-primary"
+                  onClick={handleSubmitProof}
+                  style={{ flex: 2 }}
+                >
+                  <Upload size={18} />
+                  Submit Proof
+                </button>
+              </div>
             </div>
           )}
         </div>
-
-        {challengeStatus === 'active' && (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              width: '200px',
-              height: '300px',
-              background: '#000',
-              borderRadius: '12px',
-              margin: '0 auto 20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '48px'
-            }}>
-              📱
-            </div>
-            <button 
-              className="btn btn-secondary btn-full"
-              onClick={handleStartRecording}
-            >
-              <Camera size={18} />
-              Start Recording
-            </button>
-          </div>
-        )}
-
-        {challengeStatus === 'recording' && (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              width: '200px',
-              height: '300px',
-              background: '#ff6b6b',
-              borderRadius: '12px',
-              margin: '0 auto 20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '48px',
-              animation: 'pulse 1s infinite'
-            }}>
-              🎥
-            </div>
-            <button 
-              className="btn btn-primary btn-full"
-              onClick={handleStopRecording}
-            >
-              <CheckCircle size={18} />
-              Stop & Review
-            </button>
-          </div>
-        )}
-
-        {challengeStatus === 'submitted' && (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              width: '200px',
-              height: '300px',
-              background: '#4ecdc4',
-              borderRadius: '12px',
-              margin: '0 auto 20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '48px'
-            }}>
-              ✅
-            </div>
-            <p style={{ 
-              fontSize: '14px', 
-              color: '#666666',
-              marginBottom: '16px'
-            }}>
-              Great! Your proof video is ready to submit.
-            </p>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button 
-                className="btn btn-outline"
-                onClick={() => setChallengeStatus('active')}
-                style={{ flex: 1 }}
-              >
-                <RefreshCw size={18} />
-                Re-record
-              </button>
-              <button 
-                className="btn btn-primary"
-                onClick={handleSubmitProof}
-                style={{ flex: 2 }}
-              >
-                <Upload size={18} />
-                Submit Proof
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Your Teaching Skill */}
       <div className="card">
