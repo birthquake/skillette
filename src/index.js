@@ -70,13 +70,13 @@ const isLocalhost = Boolean(
 
 function registerSW() {
   if ('serviceWorker' in navigator) {
-    const publicUrl = new URL(process.env.PUBLIC_URL, window.location.href);
+    const publicUrl = new URL(process.env.PUBLIC_URL || '', window.location.href);
     if (publicUrl.origin !== window.location.origin) {
       return;
     }
 
     window.addEventListener('load', () => {
-      const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`;
+      const swUrl = `${process.env.PUBLIC_URL || ''}/service-worker.js`;
 
       if (isLocalhost) {
         checkValidServiceWorker(swUrl);
@@ -159,13 +159,6 @@ document.addEventListener('touchmove', function(e) {
     e.preventDefault();
   }
 }, { passive: false });
-
-// Performance monitoring
-if (process.env.NODE_ENV === 'production') {
-  import('./reportWebVitals').then(({ default: reportWebVitals }) => {
-    reportWebVitals(console.log);
-  });
-}
 
 // Global app state initialization
 window.skillette = {
