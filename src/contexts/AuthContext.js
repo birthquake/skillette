@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
   onAuthStateChange, 
-  signInWithGoogle, 
+  signInWithEmail,
+  signUpWithEmail, 
   signOutUser, 
   getUserData,
   updateUserData,
@@ -54,13 +55,35 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  // Sign in with Google
-  const signIn = async () => {
+  // Sign in with email
+  const signIn = async (email, password) => {
     try {
       setLoading(true);
       setAuthError(null);
       
-      const result = await signInWithGoogle();
+      const result = await signInWithEmail(email, password);
+      
+      if (!result.success) {
+        setAuthError(result.error);
+        return { success: false, error: result.error };
+      }
+      
+      return { success: true };
+    } catch (error) {
+      setAuthError(error.message);
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Sign up with email
+  const signUp = async (email, password, displayName) => {
+    try {
+      setLoading(true);
+      setAuthError(null);
+      
+      const result = await signUpWithEmail(email, password, displayName);
       
       if (!result.success) {
         setAuthError(result.error);
