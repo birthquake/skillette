@@ -1,5 +1,12 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged,
+  updateProfile 
+} from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -21,19 +28,36 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-// Google Auth Provider
-const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-  prompt: 'select_account'
-});
-
 // Auth functions
-export const signInWithGoogle = async () => {
+export const signUpWithEmail = async (email, password, displayName) => {
   try {
-    const result = await signInWithPopup(auth, googleProvider);
+    const result = await createUserWithEmailAndPassword(auth, email, password);
     const user = result.user;
     
-    // Create user document if it doesn't exist
+    // Update the user's display name
+    if (displayName) {
+      await updateProfile(user, { displayName });
+    }
+    
+    // Create user document
+    await createUserDocument({
+      ...user,
+      displayName: displayName || user.displayName
+    });
+    
+    return { success: true, user };
+  } catch (error) {
+    console.error('Sign up error:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const signInWithEmail = async (email, password) => {
+  try {
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    const user = result.user;
+    
+    // Update user document if it exists
     await createUserDocument(user);
     
     return { success: true, user };
@@ -65,7 +89,7 @@ export const createUserDocument = async (user) => {
       uid: user.uid,
       name: user.displayName || 'Anonymous',
       email: user.email,
-      avatar: user.photoURL || '👤',
+      avatar: '👤', // Default avatar for email users
       createdAt: new Date(),
       updatedAt: new Date(),
       
