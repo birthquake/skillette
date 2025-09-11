@@ -441,7 +441,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
               justifyContent: 'center'
             }}
           >
-            <RotateCw size={20} />
+            <RefreshCw size={20} />
           </button>
         )}
       </div>
