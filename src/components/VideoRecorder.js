@@ -19,6 +19,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [streamReady, setStreamReady] = useState(false);
+  const [currentCamera, setCurrentCamera] = useState('user');
   
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -72,7 +73,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       console.log('Requesting camera access...');
       
       const constraints = {
-        video: { facingMode: 'user' },
+        video: { facingMode: currentCamera },
         audio: true
       };
 
@@ -106,30 +107,28 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     const video = videoRef.current;
     const stream = streamRef.current;
 
-    // Set video properties
     video.muted = true;
     video.autoplay = true;
     video.playsInline = true;
 
-    // Add event listeners
     const handleLoadedMetadata = () => {
-      console.log('✅ Video metadata loaded');
+      console.log('Video metadata loaded');
       console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight);
       setVideoLoaded(true);
     };
 
     const handleCanPlay = () => {
-      console.log('✅ Video can play');
+      console.log('Video can play');
       setVideoLoaded(true);
     };
 
     const handleLoadedData = () => {
-      console.log('✅ Video data loaded');
+      console.log('Video data loaded');
       setVideoLoaded(true);
     };
 
     const handleError = (e) => {
-      console.error('❌ Video error:', e);
+      console.error('Video error:', e);
     };
 
     const handleLoadStart = () => {
@@ -142,19 +141,17 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     video.addEventListener('error', handleError);
     video.addEventListener('loadstart', handleLoadStart);
 
-    // Assign stream to video
     try {
       video.srcObject = stream;
       console.log('Stream assigned to video element');
       
-      // Force load and play
       video.load();
       
       setTimeout(() => {
         video.play().then(() => {
-          console.log('✅ Video playing');
+          console.log('Video playing');
         }).catch(err => {
-          console.log('❌ Play failed:', err);
+          console.log('Play failed:', err);
         });
       }, 100);
       
@@ -234,15 +231,29 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     if (videoUrl) {
       URL.revokeObjectURL(videoUrl);
     }
-    // Restart camera
     setVideoLoaded(false);
     requestCameraAccess();
   };
 
   const handleSubmit = () => {
     if (videoBlob && onVideoReady) {
+      console.log('Submitting video blob:', videoBlob.size, 'bytes');
       onVideoReady(videoBlob, videoUrl);
     }
+  };
+
+  const switchCamera = () => {
+    console.log('Switching camera from', currentCamera, 'to', currentCamera === 'user' ? 'environment' : 'user');
+    const newCamera = currentCamera === 'user' ? 'environment' : 'user';
+    setCurrentCamera(newCamera);
+    setVideoLoaded(false);
+    setStreamReady(false);
+    
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    
+    requestCameraAccess();
   };
 
   const formatTime = (seconds) => {
@@ -341,7 +352,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           </span>
         </div>
 
-        {/* Debug info */}
         <div style={{ 
           fontSize: '10px', 
           color: '#666', 
@@ -361,7 +371,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
         marginBottom: '20px',
         border: videoLoaded ? '2px solid #4facfe' : '2px solid #ff6b6b'
       }}>
-        {/* Show loading message if not ready */}
         {(!streamReady || !videoLoaded) && !videoBlob && (
           <div style={{
             position: 'absolute',
@@ -421,7 +430,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           </div>
         )}
 
-        {/* Camera Switch Button */}
         {streamReady && videoLoaded && !isRecording && (
           <button
             onClick={switchCamera}
