@@ -27,13 +27,13 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
 
-  // Request camera access on component mount
+  // Request camera access with current camera setting
   useEffect(() => {
     requestCameraAccess();
     return () => {
       stopCamera();
     };
-  }, []);
+  }, [currentCamera]); // Add currentCamera as dependency
 
   // Set up video when both stream and element are ready
   useEffect(() => {
