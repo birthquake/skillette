@@ -356,7 +356,7 @@ function AppContent() {
             style={{
               position: 'relative', background: 'none', border: 'none',
               cursor: 'pointer', padding: '4px', display: 'flex',
-              alignItems: 'center', color: '#666'
+              alignItems: 'center', color: '#8b8fa8'
             }}
           >
             <Bell size={20} />
