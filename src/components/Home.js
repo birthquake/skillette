@@ -9,7 +9,7 @@ import {
   Zap
 } from 'lucide-react';
 import { getRandomSkills, getRecentActivity } from '../firebase';
-import { SkillCardSkeleton, ActivityRowSkeleton } from './Skeleton';
+import { SkillCardSkeleton } from './Skeleton';
 import ErrorBanner from './ErrorBanner';
 import { useAuth } from '../contexts/AuthContext';
 
