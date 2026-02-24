@@ -404,7 +404,6 @@ function AppContent() {
           <button
             className={`nav-item ${currentScreen === 'challenge' ? 'active' : ''}`}
             onClick={() => navigateToScreen('challenge')}
-            style={{ position: 'relative' }}
           >
             <Clock size={20} />
             <span className="nav-item-label">Challenge</span>
