@@ -14,7 +14,7 @@ import {
   Zap
 } from 'lucide-react';
 import { getUserSkills, getRecentActivity } from '../firebase';
-import { SkillCardSkeleton, ActivityRowSkeleton, StatsSkeleton } from './Skeleton';
+import { SkillCardSkeleton, ActivityRowSkeleton } from './Skeleton';
 import ErrorBanner from './ErrorBanner';
 import { useAuth } from '../contexts/AuthContext';
 
