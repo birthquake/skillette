@@ -87,6 +87,18 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     return () => clearInterval(timerRef.current);
   }, [isRecording, maxDuration, handleStopRecording]);
 
+  const getSupportedMimeType = () => {
+    // iOS Safari only supports mp4, Chrome/Android prefer webm
+    const types = [
+      'video/mp4;codecs=avc1',
+      'video/mp4',
+      'video/webm;codecs=vp9',
+      'video/webm;codecs=vp8',
+      'video/webm',
+    ];
+    return types.find(type => MediaRecorder.isTypeSupported(type)) || '';
+  };
+
   const handleStartRecording = () => {
     if (!streamRef.current) {
       alert('Camera not ready. Please try again.');
@@ -96,17 +108,19 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     chunksRef.current = [];
 
     try {
-      mediaRecorderRef.current = new MediaRecorder(streamRef.current);
+      const mimeType = getSupportedMimeType();
+      const options = mimeType ? { mimeType } : {};
+      mediaRecorderRef.current = new MediaRecorder(streamRef.current, options);
 
       mediaRecorderRef.current.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
 
       mediaRecorderRef.current.onstop = () => {
-        // Stop the live stream — no more audio feedback
         stopStream();
-
-        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        // Use the actual mimeType from the recorder, not a hardcoded value
+        const actualMime = mediaRecorderRef.current.mimeType || mimeType || 'video/mp4';
+        const blob = new Blob(chunksRef.current, { type: actualMime });
         const url = URL.createObjectURL(blob);
         setVideoBlob(blob);
         setVideoUrl(url);
@@ -277,9 +291,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
             src={videoUrl}
             controls
             playsInline
-            muted
-            autoPlay
-            loop
+            preload="auto"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         )}
