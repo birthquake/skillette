@@ -32,7 +32,6 @@ function AppContent() {
   const [currentChallenge, setCurrentChallenge] = useState(null);
   const [currentChallengeId, setCurrentChallengeId] = useState(null);
   const [currentMatchId, setCurrentMatchId] = useState(null);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [appLoaded, setAppLoaded] = useState(false);
   const [challengeLoading, setChallengeLoading] = useState(false);
@@ -297,7 +296,6 @@ function AppContent() {
       return (
         <NotificationsScreen
           onClose={() => {
-            setShowNotifications(false);
             setUnreadCount(0);
             navigateToScreen('home');
           }}
