@@ -345,6 +345,140 @@ export const updateChallenge = async (challengeId, updates) => {
   }
 };
 
+// Get recent activity for a user formatted for display
+export const getRecentActivity = async (userId, limitNum = 10) => {
+  try {
+    const q = query(
+      collection(db, 'challenges'),
+      where('userId', '==', userId),
+      where('status', '==', 'completed'),
+      orderBy('updatedAt', 'desc'),
+      limit(limitNum)
+    );
+
+    const querySnapshot = await getDocs(q);
+    const activity = [];
+
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const updatedAt = data.updatedAt?.toDate?.() || new Date(data.updatedAt);
+
+      // Format relative time
+      const now = new Date();
+      const diffMs = now - updatedAt;
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      let timeLabel;
+      if (diffMins < 60) timeLabel = `${diffMins}m ago`;
+      else if (diffHours < 24) timeLabel = `${diffHours}h ago`;
+      else if (diffDays === 1) timeLabel = 'Yesterday';
+      else timeLabel = `${diffDays} days ago`;
+
+      activity.push({
+        id: docSnap.id,
+        type: 'completed',
+        skill: data.skill?.learnSkill?.title || 'Unknown Skill',
+        thumbnail: data.skill?.learnSkill?.thumbnail || '🎯',
+        time: timeLabel,
+        updatedAt
+      });
+    });
+
+    return activity;
+  } catch (error) {
+    console.error('Error getting recent activity:', error);
+    return [];
+  }
+};
+
+
+// Match functions
+export const createMatch = async (matchData) => {
+  try {
+    const match = {
+      ...matchData,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      status: 'active',
+      // Track completion for each side independently
+      learnerCompleted: false,
+      teacherCompleted: false,
+    };
+    const docRef = await addDoc(collection(db, 'matches'), match);
+    return { success: true, id: docRef.id, match };
+  } catch (error) {
+    console.error('Error creating match:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const getMatchByChallenge = async (challengeId) => {
+  try {
+    const q = query(
+      collection(db, 'matches'),
+      where('challengeId', '==', challengeId),
+      limit(1)
+    );
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) return null;
+    const docSnap = querySnapshot.docs[0];
+    return { id: docSnap.id, ...docSnap.data() };
+  } catch (error) {
+    console.error('Error getting match:', error);
+    return null;
+  }
+};
+
+export const updateMatch = async (matchId, updates) => {
+  try {
+    const matchRef = doc(db, 'matches', matchId);
+    await updateDoc(matchRef, {
+      ...updates,
+      updatedAt: new Date()
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating match:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const getActiveMatchForUser = async (userId) => {
+  try {
+    const q = query(
+      collection(db, 'matches'),
+      where('learnerId', '==', userId),
+      where('status', '==', 'active'),
+      orderBy('createdAt', 'desc'),
+      limit(1)
+    );
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) return null;
+    const docSnap = querySnapshot.docs[0];
+    return { id: docSnap.id, ...docSnap.data() };
+  } catch (error) {
+    console.error('Error getting active match:', error);
+    return null;
+  }
+};
+
+export const getUserBySkillId = async (skillId) => {
+  try {
+    const skillRef = doc(db, 'skills', skillId);
+    const skillDoc = await getDoc(skillRef);
+    if (!skillDoc.exists()) return null;
+    const skillData = skillDoc.data();
+    const userRef = doc(db, 'users', skillData.userId);
+    const userDoc = await getDoc(userRef);
+    if (!userDoc.exists()) return null;
+    return { id: userDoc.id, ...userDoc.data() };
+  } catch (error) {
+    console.error('Error getting skill owner:', error);
+    return null;
+  }
+};
 // Auth state listener
 export const onAuthStateChange = (callback) => {
   return onAuthStateChanged(auth, callback);
