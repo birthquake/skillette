@@ -4,7 +4,7 @@ import './App.css';
 
 // Import Firebase context and functions
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { createChallenge, getActiveChallenge, updateChallenge, getMatchByChallenge, updateMatch, getUnreadNotifications } from './firebase';
+import { createChallenge, getActiveChallenge, updateChallenge, getMatchByChallenge, updateMatch, getUnreadNotifications, updateUserData } from './firebase';
 
 // Import components
 import LoginScreen from './components/Login';
@@ -14,6 +14,7 @@ import ChallengeScreen from './components/Challenge';
 import ProfileScreen from './components/Profile';
 import AddSkillScreen from './components/AddSkill';
 import NotificationsScreen from './components/Notifications';
+import Onboarding from './components/Onboarding';
 
 // Main App Component (inside AuthProvider)
 function AppContent() {
@@ -33,6 +34,7 @@ function AppContent() {
   const [currentChallengeId, setCurrentChallengeId] = useState(null);
   const [currentMatchId, setCurrentMatchId] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [appLoaded, setAppLoaded] = useState(false);
   const [challengeLoading, setChallengeLoading] = useState(false);
 
@@ -48,6 +50,13 @@ function AppContent() {
       return () => clearTimeout(timer);
     }
   }, [loading]);
+
+  // Show onboarding for new users
+  useEffect(() => {
+    if (userProfile && userProfile.hasSeenOnboarding === false) {
+      setShowOnboarding(true);
+    }
+  }, [userProfile]);
 
   // Poll unread notification count every 30s
   useEffect(() => {
@@ -318,8 +327,19 @@ function AppContent() {
     }
   };
 
+  const handleOnboardingComplete = async () => {
+    setShowOnboarding(false);
+    if (currentUser) {
+      await updateUserData(currentUser.uid, { hasSeenOnboarding: true });
+    }
+    navigateToScreen('addSkill');
+  };
+
   return (
     <div className="App">
+      {/* Onboarding overlay */}
+      {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
+
       {/* Top Navigation Bar */}
       <nav className="nav-bar">
         <div className="nav-logo">
