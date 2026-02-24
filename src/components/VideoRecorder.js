@@ -112,18 +112,25 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     video.autoplay = true;
     video.playsInline = true;
 
-    const markLoaded = () => setVideoLoaded(true);
+    // Remove any stale listeners from a previous stream before adding new ones
+    const newVideo = video.cloneNode(false);
+    video.parentNode?.replaceChild(newVideo, video);
+    videoRef.current = newVideo;
 
-    video.addEventListener('loadedmetadata', markLoaded);
-    video.addEventListener('canplay', markLoaded);
-    video.addEventListener('loadeddata', markLoaded);
+    const markLoaded = () => setVideoLoaded(true);
+    newVideo.addEventListener('loadedmetadata', markLoaded);
+    newVideo.addEventListener('canplay', markLoaded);
+    newVideo.addEventListener('loadeddata', markLoaded);
 
     try {
-      video.srcObject = stream;
-      video.load();
+      newVideo.muted = true;
+      newVideo.autoplay = true;
+      newVideo.playsInline = true;
+      newVideo.srcObject = stream;
+      newVideo.load();
       setTimeout(() => {
-        video.play().catch(err => console.log('Play failed:', err));
-      }, 100);
+        newVideo.play().catch(err => console.log('Play failed:', err));
+      }, 150);
     } catch (error) {
       console.error('Failed to assign stream to video:', error);
     }
@@ -186,14 +193,20 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
   };
 
   const switchCamera = () => {
-    const newCamera = currentCamera === 'user' ? 'environment' : 'user';
-    setCurrentCamera(newCamera);
-    setVideoLoaded(false);
-    setStreamReady(false);
+    // Stop the existing stream first
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
-    requestCameraAccess();
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setVideoLoaded(false);
+    setStreamReady(false);
+    // Changing currentCamera triggers the useEffect which calls
+    // requestCameraAccess — don't call it directly here or you get two
+    // simultaneous requests racing each other
+    setCurrentCamera(prev => prev === 'user' ? 'environment' : 'user');
   };
 
   const formatTime = (seconds) => {
