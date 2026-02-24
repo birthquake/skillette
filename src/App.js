@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Home, RotateCcw, Clock, User, Flame, Loader } from 'lucide-react';
+import { Home, RotateCcw, Clock, User, Flame, Loader, Bell } from 'lucide-react';
 import './App.css';
 
 // Import Firebase context and functions
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { createChallenge, getActiveChallenge, updateChallenge, getMatchByChallenge, updateMatch } from './firebase';
+import { createChallenge, getActiveChallenge, updateChallenge, getMatchByChallenge, updateMatch, getUnreadNotifications } from './firebase';
 
 // Import components
 import LoginScreen from './components/Login';
@@ -13,6 +13,7 @@ import RouletteScreen from './components/Roulette';
 import ChallengeScreen from './components/Challenge';
 import ProfileScreen from './components/Profile';
 import AddSkillScreen from './components/AddSkill';
+import NotificationsScreen from './components/Notifications';
 
 // Main App Component (inside AuthProvider)
 function AppContent() {
@@ -31,6 +32,8 @@ function AppContent() {
   const [currentChallenge, setCurrentChallenge] = useState(null);
   const [currentChallengeId, setCurrentChallengeId] = useState(null);
   const [currentMatchId, setCurrentMatchId] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [appLoaded, setAppLoaded] = useState(false);
   const [challengeLoading, setChallengeLoading] = useState(false);
 
@@ -46,6 +49,18 @@ function AppContent() {
       return () => clearTimeout(timer);
     }
   }, [loading]);
+
+  // Poll unread notification count every 30s
+  useEffect(() => {
+    if (!currentUser) return;
+    const checkUnread = async () => {
+      const unread = await getUnreadNotifications(currentUser.uid);
+      setUnreadCount(unread.length);
+    };
+    checkUnread();
+    const interval = setInterval(checkUnread, 30000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
 
   // Restore any active challenge from Firestore on login
   useEffect(() => {
@@ -278,7 +293,17 @@ function AppContent() {
             onNavigate={navigateToScreen}
           />
         );
-      case 'addSkill':
+      case 'notifications':
+      return (
+        <NotificationsScreen
+          onClose={() => {
+            setShowNotifications(false);
+            setUnreadCount(0);
+            navigateToScreen('home');
+          }}
+        />
+      );
+    case 'addSkill':
         return (
           <AddSkillScreen
             onNavigate={navigateToScreen}
@@ -308,6 +333,27 @@ function AppContent() {
             {user.streak}
           </div>
           <span>Level {user.level}</span>
+          <button
+            onClick={() => navigateToScreen('notifications')}
+            style={{
+              position: 'relative', background: 'none', border: 'none',
+              cursor: 'pointer', padding: '4px', display: 'flex',
+              alignItems: 'center', color: '#666'
+            }}
+          >
+            <Bell size={20} />
+            {unreadCount > 0 && (
+              <div style={{
+                position: 'absolute', top: '-2px', right: '-2px',
+                width: '16px', height: '16px', borderRadius: '50%',
+                background: '#f5576c', color: 'white',
+                fontSize: '10px', fontWeight: '700',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </div>
+            )}
+          </button>
         </div>
       </nav>
 
