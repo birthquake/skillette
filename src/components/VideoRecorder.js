@@ -277,6 +277,9 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
             src={videoUrl}
             controls
             playsInline
+            muted
+            autoPlay
+            loop
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         )}
