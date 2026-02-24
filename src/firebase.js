@@ -561,6 +561,21 @@ export const markAllNotificationsRead = async (userId) => {
     return { success: false };
   }
 };
+
+// Reporting
+export const createReport = async (reportData) => {
+  try {
+    await addDoc(collection(db, 'reports'), {
+      ...reportData,
+      status: 'pending',
+      createdAt: new Date()
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Error creating report:', error);
+    return { success: false };
+  }
+};
 // Auth state listener
 export const onAuthStateChange = (callback) => {
   return onAuthStateChanged(auth, callback);
