@@ -576,6 +576,48 @@ export const createReport = async (reportData) => {
     return { success: false };
   }
 };
+
+// Admin functions
+export const getAdminData = async () => {
+  try {
+    // Get pending and recent reports
+    const reportsQ = query(
+      collection(db, 'reports'),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    );
+    const reportsSnap = await getDocs(reportsQ);
+    const reports = reportsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // Get aggregate stats
+    const [usersSnap, skillsSnap] = await Promise.all([
+      getDocs(collection(db, 'users')),
+      getDocs(collection(db, 'skills')),
+    ]);
+
+    return {
+      reports,
+      stats: {
+        totalUsers: usersSnap.size,
+        totalSkills: skillsSnap.size,
+      }
+    };
+  } catch (error) {
+    console.error('Error loading admin data:', error);
+    return { reports: [], stats: {} };
+  }
+};
+
+export const resolveReport = async (reportId, status) => {
+  try {
+    const ref = doc(db, 'reports', reportId);
+    await updateDoc(ref, { status, resolvedAt: new Date() });
+    return { success: true };
+  } catch (error) {
+    console.error('Error resolving report:', error);
+    return { success: false };
+  }
+};
 // Auth state listener
 export const onAuthStateChange = (callback) => {
   return onAuthStateChanged(auth, callback);
