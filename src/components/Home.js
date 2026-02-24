@@ -6,10 +6,10 @@ import {
   Users, 
   Trophy, 
   TrendingUp,
-  Zap,
-  Loader
+  Zap
 } from 'lucide-react';
 import { getRandomSkills, getRecentActivity } from '../firebase';
+import { SkillCardSkeleton, ActivityRowSkeleton } from './Skeleton';
 import ErrorBanner from './ErrorBanner';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -109,7 +109,7 @@ function HomeScreen({ user, onNavigate }) {
     <div className="fade-in" style={{ paddingTop: '20px', paddingBottom: '20px' }}>
 
       {/* Welcome Section */}
-      <div className="card">
+      <div className="card fade-in">
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <h1 style={{ 
             fontSize: '28px', 
@@ -189,8 +189,10 @@ function HomeScreen({ user, onNavigate }) {
         {skillsError ? (
           <ErrorBanner message={skillsError} onRetry={() => setRetryCount(c => c + 1)} />
         ) : skillsLoading ? (
-          <div style={{ textAlign: 'center', padding: '24px 0' }}>
-            <Loader size={24} style={{ animation: 'spin 1s linear infinite', color: '#667eea' }} />
+          <div>
+            <SkillCardSkeleton />
+            <SkillCardSkeleton />
+            <SkillCardSkeleton />
           </div>
         ) : featuredSkills.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
@@ -306,7 +308,7 @@ function HomeScreen({ user, onNavigate }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="stagger-children" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {recentActivity.map((activity) => (
               <div
                 key={activity.id}
