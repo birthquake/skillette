@@ -49,8 +49,8 @@ function NotificationsScreen({ onClose }) {
       <div className="card" style={{ marginBottom: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Bell size={22} style={{ color: '#667eea' }} />
-            <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1a1a1a' }}>
+            <Bell size={22} style={{ color: '#7c6af7' }} />
+            <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#f0f0f5' }}>
               Notifications
             </h2>
             {unreadCount > 0 && (
@@ -70,7 +70,7 @@ function NotificationsScreen({ onClose }) {
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: '4px',
-                  color: '#667eea', fontSize: '13px', fontWeight: '600'
+                  color: '#7c6af7', fontSize: '13px', fontWeight: '600'
                 }}
               >
                 <CheckCheck size={15} />
@@ -81,7 +81,7 @@ function NotificationsScreen({ onClose }) {
               onClick={onClose}
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
-                color: '#666', fontSize: '22px', lineHeight: 1
+                color: '#8b8fa8', fontSize: '22px', lineHeight: 1
               }}
             >
               ✕
@@ -113,10 +113,10 @@ function NotificationsScreen({ onClose }) {
               key={notification.id}
               onClick={() => !notification.read && handleMarkRead(notification.id)}
               style={{
-                background: notification.read ? 'white' : 'linear-gradient(135deg, #f0f4ff 0%, #faf0ff 100%)',
+                background: notification.read ? '#1a1d27' : 'linear-gradient(135deg, rgba(124,106,247,0.12) 0%, rgba(156,89,245,0.08) 100%)',
                 borderRadius: '14px',
                 padding: '16px',
-                border: notification.read ? '1px solid #e2e8f0' : '1px solid #c4b5fd',
+                border: notification.read ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(124,106,247,0.4)',
                 cursor: notification.read ? 'default' : 'pointer',
                 display: 'flex',
                 alignItems: 'flex-start',
@@ -128,8 +128,8 @@ function NotificationsScreen({ onClose }) {
               <div style={{
                 width: '44px', height: '44px', borderRadius: '12px',
                 background: notification.read
-                  ? '#f8fafc'
-                  : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  ? '#252838'
+                  : 'linear-gradient(135deg, #7c6af7 0%, #9c59f5 100%)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '22px', flexShrink: 0
               }}>
@@ -140,16 +140,16 @@ function NotificationsScreen({ onClose }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{
                   fontSize: '15px', fontWeight: notification.read ? '500' : '700',
-                  color: '#1a1a1a', marginBottom: '4px'
+                  color: '#f0f0f5', marginBottom: '4px'
                 }}>
                   {notification.title}
                 </p>
                 <p style={{
-                  fontSize: '13px', color: '#555', lineHeight: '1.5'
+                  fontSize: '13px', color: '#8b8fa8', lineHeight: '1.5'
                 }}>
                   {notification.body}
                 </p>
-                <p style={{ fontSize: '12px', color: '#999', marginTop: '6px' }}>
+                <p style={{ fontSize: '12px', color: '#555870', marginTop: '6px' }}>
                   {formatTime(notification.createdAt)}
                 </p>
               </div>
@@ -158,7 +158,7 @@ function NotificationsScreen({ onClose }) {
               {!notification.read && (
                 <div style={{
                   width: '10px', height: '10px', borderRadius: '50%',
-                  background: '#667eea', flexShrink: 0, marginTop: '4px'
+                  background: '#7c6af7', flexShrink: 0, marginTop: '4px'
                 }} />
               )}
             </div>
