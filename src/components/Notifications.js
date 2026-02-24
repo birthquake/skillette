@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, CheckCheck, Loader } from 'lucide-react';
+import { Bell, CheckCheck } from 'lucide-react';
+import { NotificationSkeleton } from './Skeleton';
 import { getAllNotifications, markAllNotificationsRead, markNotificationRead } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -92,9 +93,10 @@ function NotificationsScreen({ onClose }) {
 
       {/* Content */}
       {loading ? (
-        <div style={{ textAlign: 'center', paddingTop: '60px', color: 'white' }}>
-          <Loader size={32} style={{ animation: 'spin 1s linear infinite', marginBottom: '12px' }} />
-          <p>Loading notifications...</p>
+        <div>
+          <NotificationSkeleton />
+          <NotificationSkeleton />
+          <NotificationSkeleton />
         </div>
       ) : notifications.length === 0 ? (
         <div style={{ textAlign: 'center', paddingTop: '60px', color: 'white' }}>
@@ -107,7 +109,7 @@ function NotificationsScreen({ onClose }) {
           </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="stagger-children" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {notifications.map(notification => (
             <div
               key={notification.id}
