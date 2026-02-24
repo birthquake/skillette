@@ -127,7 +127,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
         <div style={{
           width: '80px',
           height: '80px',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(135deg, #7c6af7 0%, #9c59f5 100%)',
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
@@ -144,14 +144,14 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
           fontSize: '24px', 
           fontWeight: '700', 
           marginBottom: '4px',
-          color: '#1a1a1a'
+          color: '#f0f0f5'
         }}>
           {user.name}
         </h1>
         
         <p style={{ 
           fontSize: '16px', 
-          color: '#666666',
+          color: '#8b8fa8',
           marginBottom: '20px'
         }}>
           Level {user.level} Skill Swapper
@@ -215,7 +215,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
           <div style={{ fontSize: '24px', fontWeight: '700', color: '#4facfe' }}>
             {user.skillsLearned}
           </div>
-          <div style={{ fontSize: '12px', color: '#666666', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '12px', color: '#8b8fa8', textTransform: 'uppercase' }}>
             Skills Learned
           </div>
         </div>
@@ -225,7 +225,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
           <div style={{ fontSize: '24px', fontWeight: '700', color: '#f5576c' }}>
             {user.skillsTaught}
           </div>
-          <div style={{ fontSize: '12px', color: '#666666', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '12px', color: '#8b8fa8', textTransform: 'uppercase' }}>
             Skills Taught
           </div>
         </div>
@@ -235,7 +235,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
           <span style={{ fontSize: '16px', fontWeight: '600' }}>Level Progress</span>
-          <span style={{ fontSize: '14px', color: '#666666' }}>Level {user.level}</span>
+          <span style={{ fontSize: '14px', color: '#8b8fa8' }}>Level {user.level}</span>
         </div>
         <div style={{
           width: '100%',
@@ -248,7 +248,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
           <div style={{
             width: `${xpProgressPercent}%`,
             height: '100%',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'linear-gradient(135deg, #7c6af7 0%, #9c59f5 100%)',
             borderRadius: '6px',
             transition: 'width 0.5s ease'
           }} />
@@ -257,7 +257,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
           display: 'flex', 
           justifyContent: 'space-between',
           fontSize: '12px',
-          color: '#666666'
+          color: '#8b8fa8'
         }}>
           <span>{xpIntoLevel} XP</span>
           <span>500 XP to Level {user.level + 1}</span>
@@ -330,8 +330,8 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
       ) : userSkills.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
           <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎯</div>
-          <p style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a1a', marginBottom: '8px' }}>No skills yet</p>
-          <p style={{ fontSize: '14px', color: '#666', marginBottom: '16px' }}>Add your first skill to get started!</p>
+          <p style={{ fontSize: '16px', fontWeight: '600', color: '#f0f0f5', marginBottom: '8px' }}>No skills yet</p>
+          <p style={{ fontSize: '14px', color: '#8b8fa8', marginBottom: '16px' }}>Add your first skill to get started!</p>
           <button className="btn btn-primary" onClick={() => onNavigate('addSkill')}>Add a Skill</button>
         </div>
       ) : null}
@@ -346,7 +346,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
             <div style={{
               width: '50px',
               height: '50px',
-              background: 'white',
+              background: '#252838',
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
@@ -362,7 +362,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
                 fontSize: '16px', 
                 fontWeight: '600', 
                 marginBottom: '4px',
-                color: '#1a1a1a'
+                color: '#f0f0f5'
               }}>
                 {skill.title}
               </h3>
@@ -371,7 +371,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
                 alignItems: 'center', 
                 gap: '8px',
                 fontSize: '14px',
-                color: '#666666',
+                color: '#8b8fa8',
                 marginBottom: '4px'
               }}>
                 <span>{skill.category}</span>
@@ -395,7 +395,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
               </span>
             </div>
             
-            <ChevronRight size={18} style={{ color: '#666666' }} />
+            <ChevronRight size={18} style={{ color: '#8b8fa8' }} />
           </div>
         </div>
       ))}
@@ -452,7 +452,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
               </h3>
               <p style={{ 
                 fontSize: '14px',
-                color: '#666666',
+                color: '#8b8fa8',
                 marginBottom: achievement.progress ? '8px' : '0'
               }}>
                 {achievement.description}
@@ -478,7 +478,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
               {achievement.unlocked && achievement.date && (
                 <p style={{ 
                   fontSize: '12px',
-                  color: '#666666',
+                  color: '#8b8fa8',
                   marginTop: '4px'
                 }}>
                   Unlocked {achievement.date}
@@ -510,10 +510,10 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
       ) : recentActivity.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
           <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎯</div>
-          <p style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a1a', marginBottom: '8px' }}>
+          <p style={{ fontSize: '16px', fontWeight: '600', color: '#f0f0f5', marginBottom: '8px' }}>
             No activity yet
           </p>
-          <p style={{ fontSize: '14px', color: '#666' }}>
+          <p style={{ fontSize: '14px', color: '#8b8fa8' }}>
             Complete your first skill swap to see it here!
           </p>
         </div>
@@ -522,7 +522,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
           <div key={activity.id} className="card" style={{ marginBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <div style={{
-                width: '44px', height: '44px', background: 'white',
+                width: '44px', height: '44px', background: '#1a1d27',
                 borderRadius: '10px', display: 'flex', alignItems: 'center',
                 justifyContent: 'center', fontSize: '20px',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)', flexShrink: 0
@@ -531,13 +531,13 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{
-                  fontSize: '14px', fontWeight: '600', color: '#1a1a1a',
+                  fontSize: '14px', fontWeight: '600', color: '#f0f0f5',
                   marginBottom: '2px', overflow: 'hidden',
                   textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                 }}>
                   {activity.skill}
                 </p>
-                <p style={{ fontSize: '12px', color: '#666666' }}>
+                <p style={{ fontSize: '12px', color: '#8b8fa8' }}>
                   Completed · {activity.time}
                 </p>
               </div>
