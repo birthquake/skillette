@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Home, RotateCcw, Camera, Clock, User, Flame, Trophy, Star, Loader } from 'lucide-react';
+import { Home, RotateCcw, Clock, User, Flame, Loader } from 'lucide-react';
 import './App.css';
 
-// Import Firebase context
+// Import Firebase context and functions
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { createChallenge, getActiveChallenge, updateChallenge } from './firebase';
 
 // Import components
 import LoginScreen from './components/Login';
@@ -16,7 +17,7 @@ import AddSkillScreen from './components/AddSkill';
 // Main App Component (inside AuthProvider)
 function AppContent() {
   const { 
-    currentUser, 
+    currentUser,
     userProfile, 
     loading, 
     isAuthenticated, 
@@ -28,9 +29,11 @@ function AppContent() {
   // App state
   const [currentScreen, setCurrentScreen] = useState('home');
   const [currentChallenge, setCurrentChallenge] = useState(null);
+  const [currentChallengeId, setCurrentChallengeId] = useState(null);
   const [appLoaded, setAppLoaded] = useState(false);
+  const [challengeLoading, setChallengeLoading] = useState(false);
 
-  // Get user display data for compatibility with existing components
+  // Get user display data
   const user = getUserDisplayData();
 
   // Initialize app after auth loads
@@ -43,93 +46,102 @@ function AppContent() {
     }
   }, [loading]);
 
-  // Mock data for development (will be replaced with Firebase data later)
-  const mockSkills = [
-    {
-      id: 1,
-      title: "Perfect Paper Airplane",
-      author: "Sarah",
-      difficulty: "Easy",
-      duration: "2 min",
-      category: "Crafts",
-      thumbnail: "✈️"
-    },
-    {
-      id: 2,
-      title: "Whistle with Your Fingers",
-      author: "Mike",
-      difficulty: "Medium",
-      duration: "5 min",
-      category: "Life Hacks",
-      thumbnail: "👌"
-    },
-    {
-      id: 3,
-      title: "Basic Origami Crane",
-      author: "Emma",
-      difficulty: "Medium",
-      duration: "4 min",
-      category: "Crafts",
-      thumbnail: "🕊️"
-    },
-    {
-      id: 4,
-      title: "Tie a Tie Perfectly",
-      author: "David",
-      difficulty: "Easy",
-      duration: "3 min",
-      category: "Life Skills",
-      thumbnail: "👔"
-    },
-    {
-      id: 5,
-      title: "Card Trick - The Four Aces",
-      author: "Lisa",
-      difficulty: "Hard",
-      duration: "8 min",
-      category: "Magic",
-      thumbnail: "🃏"
-    }
-  ];
+  // Restore any active challenge from Firestore on login
+  useEffect(() => {
+    if (!isAuthenticated || !currentUser) return;
+
+    const restoreChallenge = async () => {
+      setChallengeLoading(true);
+      try {
+        const saved = await getActiveChallenge(currentUser.uid);
+        if (saved) {
+          // Convert Firestore timestamps back to plain objects
+          const restored = {
+            skill: saved.skill,
+            startTime: saved.startTime?.toDate
+              ? saved.startTime.toDate()
+              : new Date(saved.startTime),
+            timeLimit: saved.timeLimit,
+            status: saved.status
+          };
+
+          // Check if the challenge has already expired
+          const now = new Date().getTime();
+          const challengeEnd = new Date(restored.startTime).getTime() + restored.timeLimit;
+          if (now < challengeEnd) {
+            setCurrentChallenge(restored);
+            setCurrentChallengeId(saved.id);
+          } else {
+            // Mark expired in Firestore
+            await updateChallenge(saved.id, { status: 'expired' });
+          }
+        }
+      } catch (error) {
+        console.error('Error restoring challenge:', error);
+      } finally {
+        setChallengeLoading(false);
+      }
+    };
+
+    restoreChallenge();
+  }, [isAuthenticated, currentUser]);
+
   // Navigation handler
   const navigateToScreen = (screen) => {
     setCurrentScreen(screen);
   };
 
-  // Challenge management
-  const startChallenge = (skill) => {
+  // Start a new challenge — saves to Firestore
+  const startChallenge = async (skill) => {
     const challenge = {
-      skill: skill,
+      skill,
       startTime: new Date(),
-      timeLimit: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+      timeLimit: 24 * 60 * 60 * 1000,
       status: 'active'
     };
+
     setCurrentChallenge(challenge);
     setCurrentScreen('challenge');
+
+    // Save to Firestore so it persists across refreshes
+    try {
+      const result = await createChallenge({
+        userId: currentUser.uid,
+        skill,
+        timeLimit: challenge.timeLimit
+      });
+      if (result.success) {
+        setCurrentChallengeId(result.id);
+      }
+    } catch (error) {
+      console.error('Error saving challenge to Firestore:', error);
+    }
   };
 
-  // Complete challenge
+  // Complete a challenge — updates Firestore and user stats
   const completeChallenge = async () => {
-    if (currentChallenge && isAuthenticated) {
-      try {
-        // Update user stats in Firebase
-        await incrementSkillsLearned();
-        await updateStreak();
-        
-        // Clear challenge
-        setCurrentChallenge(null);
-        setCurrentScreen('home');
-      } catch (error) {
-        console.error('Error completing challenge:', error);
-        // Still clear challenge on error
-        setCurrentChallenge(null);
-        setCurrentScreen('home');
+    if (!currentChallenge || !isAuthenticated) return;
+
+    try {
+      // Mark challenge as completed in Firestore
+      if (currentChallengeId) {
+        await updateChallenge(currentChallengeId, { status: 'completed' });
       }
+
+      // Update user stats
+      await incrementSkillsLearned();
+      await updateStreak();
+    } catch (error) {
+      console.error('Error completing challenge:', error);
+    } finally {
+      setCurrentChallenge(null);
+      setCurrentChallengeId(null);
+      setCurrentScreen('home');
     }
   };
 
   // Show loading screen while Firebase initializes
-  if (loading || !appLoaded) {
+  if (loading || !appLoaded || challengeLoading) {
     return (
       <div className="App">
         <div style={{
@@ -154,11 +166,9 @@ function AppContent() {
           <p style={{ fontSize: '16px', opacity: 0.8 }}>
             {loading ? 'Connecting...' : 'Loading your skill adventure...'}
           </p>
-          {loading && (
-            <div style={{ marginTop: '20px' }}>
-              <Loader size={24} style={{ animation: 'spin 1s linear infinite' }} />
-            </div>
-          )}
+          <div style={{ marginTop: '20px' }}>
+            <Loader size={24} style={{ animation: 'spin 1s linear infinite' }} />
+          </div>
         </div>
       </div>
     );
@@ -177,7 +187,6 @@ function AppContent() {
           <HomeScreen 
             user={user}
             onNavigate={navigateToScreen}
-            mockSkills={mockSkills}
           />
         );
       case 'roulette':
@@ -203,24 +212,24 @@ function AppContent() {
             onNavigate={navigateToScreen}
           />
         );
-        case 'addSkill':
-  return (
-    <AddSkillScreen
-      onNavigate={navigateToScreen}
-      onSkillAdded={() => navigateToScreen('profile')}
-    />
-  );
+      case 'addSkill':
+        return (
+          <AddSkillScreen
+            onNavigate={navigateToScreen}
+            onSkillAdded={() => navigateToScreen('profile')}
+          />
+        );
       default:
         return (
           <HomeScreen 
             user={user}
             onNavigate={navigateToScreen}
-            mockSkills={mockSkills}
           />
         );
     }
   };
-return (
+
+  return (
     <div className="App">
       {/* Top Navigation Bar */}
       <nav className="nav-bar">
