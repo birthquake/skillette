@@ -8,8 +8,9 @@ import {
   updateProfile 
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
-// Your web app's Firebase configuration
+// Firebase configuration — values loaded from environment variables
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
@@ -18,12 +19,14 @@ const firebaseConfig = {
   messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.REACT_APP_FIREBASE_APP_ID
 };
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 // Auth functions
 export const signUpWithEmail = async (email, password, displayName) => {
@@ -110,7 +113,6 @@ export const createUserDocument = async (user) => {
     
     try {
       await setDoc(userRef, userData);
-      console.log('User document created');
       return userData;
     } catch (error) {
       console.error('Error creating user document:', error);
@@ -155,20 +157,33 @@ export const updateUserData = async (uid, updates) => {
   }
 };
 
-// Cloudinary upload function (will add environment variables later)
-export const uploadVideo = async (videoBlob, userId, challengeId) => {
+// Video upload using Firebase Storage
+export const uploadVideo = async (videoBlob, userId, challengeId, onProgress) => {
   try {
-    // For now, create a mock URL until we set up Cloudinary
-    const mockUrl = URL.createObjectURL(videoBlob);
-    
-    // TODO: Replace with actual Cloudinary upload when environment variables are set
-    console.log('Video uploaded (mock):', mockUrl);
-    
-    return { 
-      success: true, 
-      url: mockUrl, 
-      path: `videos/${userId}/${challengeId}/${Date.now()}.webm` 
-    };
+    const path = `videos/${userId}/${challengeId}_${Date.now()}.webm`;
+    const storageRef = ref(storage, path);
+
+    return new Promise((resolve, reject) => {
+      const uploadTask = uploadBytesResumable(storageRef, videoBlob);
+
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          const progress = Math.round(
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          );
+          if (onProgress) onProgress(progress);
+        },
+        (error) => {
+          console.error('Upload error:', error);
+          reject({ success: false, error: error.message });
+        },
+        async () => {
+          const url = await getDownloadURL(uploadTask.snapshot.ref);
+          resolve({ success: true, url, path });
+        }
+      );
+    });
   } catch (error) {
     console.error('Error uploading video:', error);
     return { success: false, error: error.message };
@@ -222,7 +237,7 @@ export const getUserSkills = async (userId) => {
 
 export const getRandomSkills = async (excludeUserId = null, limitNum = 10) => {
   try {
-    let q = query(
+    const q = query(
       collection(db, 'skills'),
       where('isActive', '==', true),
       orderBy('createdAt', 'desc'),
@@ -238,6 +253,12 @@ export const getRandomSkills = async (excludeUserId = null, limitNum = 10) => {
         skills.push(skillData);
       }
     });
+
+    // Shuffle the results so it feels random each time
+    for (let i = skills.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [skills[i], skills[j]] = [skills[j], skills[i]];
+    }
     
     return skills;
   } catch (error) {
@@ -266,11 +287,32 @@ export const createChallenge = async (challengeData) => {
   }
 };
 
+export const getActiveChallenge = async (userId) => {
+  try {
+    const q = query(
+      collection(db, 'challenges'),
+      where('userId', '==', userId),
+      where('status', '==', 'active'),
+      orderBy('createdAt', 'desc'),
+      limit(1)
+    );
+
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) return null;
+
+    const docSnap = querySnapshot.docs[0];
+    return { id: docSnap.id, ...docSnap.data() };
+  } catch (error) {
+    console.error('Error getting active challenge:', error);
+    return null;
+  }
+};
+
 export const getUserChallenges = async (userId) => {
   try {
     const q = query(
       collection(db, 'challenges'),
-      where('participants', 'array-contains', userId),
+      where('userId', '==', userId),
       orderBy('createdAt', 'desc'),
       limit(20)
     );
