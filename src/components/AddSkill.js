@@ -119,7 +119,11 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
   };
 
   const handleSubmit = async () => {
-    if (!validate()) return;
+    if (!validate()) {
+      // Scroll to top so user sees the validation errors
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
 
     setIsSubmitting(true);
     setSubmitError('');
@@ -242,6 +246,20 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
 
   return (
     <div className="fade-in" style={{ paddingTop: '20px', paddingBottom: '40px' }}>
+
+      {/* Validation summary — shown when submit is tapped with missing fields */}
+      {Object.keys(formErrors).length > 0 && (
+        <div style={{
+          background: '#fff5f5', border: '1px solid #ff6b6b',
+          borderRadius: '12px', padding: '14px 16px', marginBottom: '16px',
+          display: 'flex', alignItems: 'center', gap: '10px'
+        }}>
+          <AlertCircle size={18} style={{ color: '#ff6b6b', flexShrink: 0 }} />
+          <p style={{ fontSize: '14px', color: '#ff6b6b', margin: 0 }}>
+            Please fill in all required fields before submitting.
+          </p>
+        </div>
+      )}
 
       {/* Header */}
       <div className="card">
