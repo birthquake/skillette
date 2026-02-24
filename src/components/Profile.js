@@ -11,10 +11,10 @@ import {
   Clock,
   ChevronRight,
   Medal,
-  Zap,
-  Loader
+  Zap
 } from 'lucide-react';
 import { getUserSkills, getRecentActivity } from '../firebase';
+import { SkillCardSkeleton, ActivityRowSkeleton, StatsSkeleton } from './Skeleton';
 import ErrorBanner from './ErrorBanner';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -299,6 +299,21 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
             </div>
             <ChevronRight size={18} />
           </button>
+
+          {/* Admin link — only visible in dev or for admin UIDs */}
+          {process.env.NODE_ENV === 'development' && (
+            <button 
+              className="btn btn-outline"
+              onClick={() => onNavigate('admin')}
+              style={{ justifyContent: 'space-between', textAlign: 'left', marginTop: '8px', borderColor: 'rgba(124,106,247,0.3)' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span>🛡️</span>
+                <span style={{ color: '#a594f9' }}>Admin Panel</span>
+              </div>
+              <ChevronRight size={18} style={{ color: '#a594f9' }} />
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -322,8 +337,10 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
       </div>
 
       {skillsLoading ? (
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <Loader size={28} style={{ animation: 'spin 1s linear infinite', color: 'white' }} />
+        <div>
+          <SkillCardSkeleton />
+          <SkillCardSkeleton />
+          <SkillCardSkeleton />
         </div>
       ) : skillsError ? (
         <ErrorBanner message={skillsError} onRetry={() => setRetryCount(c => c + 1)} />
@@ -504,8 +521,11 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
       {activityError ? (
         <ErrorBanner message={activityError} onRetry={() => setRetryCount(c => c + 1)} />
       ) : activityLoading ? (
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <Loader size={28} style={{ animation: 'spin 1s linear infinite', color: 'white' }} />
+        <div>
+          <ActivityRowSkeleton />
+          <ActivityRowSkeleton />
+          <ActivityRowSkeleton />
+          <ActivityRowSkeleton />
         </div>
       ) : recentActivity.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
