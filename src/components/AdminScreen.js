@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Flag, Users, BookOpen, CheckCircle, XCircle, Clock, RefreshCw } from 'lucide-react';
+import { Flag, Users, BookOpen, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { getAdminData, resolveReport } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { SkillCardSkeleton } from './Skeleton';
