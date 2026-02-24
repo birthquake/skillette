@@ -282,9 +282,7 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
         }}>
           Add a Skill
         </h1>
-        <p style={{ fontSize: '14px', color: '#666666' }}>
-          Share something you know — others will learn it and teach you something back.
-        </p>
+
       </div>
 
       {/* Skill Name */}
@@ -447,9 +445,7 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
           <label style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a1a' }}>Pick an Emoji</label>
         </div>
-        <p style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>
-          This will be your skill's icon in the app.
-        </p>
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '8px' }}>
           {THUMBNAILS.map((emoji) => (
             <button
@@ -477,14 +473,12 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
 
       {/* Tips */}
       <div className="card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
           <label style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a1a' }}>
             Tips <span style={{ fontWeight: '400', color: '#999' }}>(optional)</span>
           </label>
         </div>
-        <p style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>
-          Any advice to help others master this faster?
-        </p>
+
         <textarea
           placeholder="e.g. Start slowly, the key is wrist rotation not arm strength..."
           value={formData.tips}
@@ -504,14 +498,14 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
 
       {/* Tutorial Video */}
       <div className="card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
           <Video size={16} style={{ color: '#667eea' }} />
           <label style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a1a' }}>
             Tutorial Video <span style={{ fontWeight: '400', color: '#999' }}>(optional)</span>
           </label>
         </div>
-        <p style={{ fontSize: '13px', color: '#666', marginBottom: '16px' }}>
-          A short demo makes your skill much easier to learn. Max 30 seconds.
+        <p style={{ fontSize: '12px', color: '#999', marginBottom: '16px' }}>
+          Max 30 seconds
         </p>
 
         {!videoBlob && (
