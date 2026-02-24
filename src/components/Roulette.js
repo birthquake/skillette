@@ -6,12 +6,12 @@ import {
   Zap,
   ArrowRight,
   RefreshCw,
-  AlertCircle,
   Loader,
   Flag
 } from 'lucide-react';
 import { getRandomSkills, getUserSkills, createMatch, createChallenge, createNotification } from '../firebase';
 import ReportModal from './ReportModal';
+import ErrorBanner from './ErrorBanner';
 import { useAuth } from '../contexts/AuthContext';
 
 function RouletteScreen({ onStartChallenge, onNavigate }) {
@@ -28,6 +28,7 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
   const [loadingSkills, setLoadingSkills] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [showReport, setShowReport] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   const categories = [
     { name: 'Life Hacks', color: '#ff6b6b', emoji: '💡' },
@@ -60,7 +61,7 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
     };
 
     loadSkills();
-  }, [currentUser.uid]);
+  }, [currentUser.uid, retryCount]);
 
   const handleSpin = () => {
     if (isSpinning) return;
@@ -240,32 +241,10 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
 
         {/* Error / Warning */}
         {loadError && (
-          <div style={{
-            background: '#fff5f5',
-            border: '1px solid #ff6b6b',
-            borderRadius: '12px',
-            padding: '16px',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '12px',
-            marginBottom: '4px'
-          }}>
-            <AlertCircle size={20} style={{ color: '#ff6b6b', flexShrink: 0, marginTop: '2px' }} />
-            <div>
-              <p style={{ fontSize: '14px', color: '#ff6b6b', fontWeight: '600', marginBottom: '4px' }}>
-                {loadError}
-              </p>
-              {userSkills.length === 0 && (
-                <button
-                  className="btn btn-primary"
-                  onClick={() => onNavigate('addSkill')}
-                  style={{ marginTop: '8px', fontSize: '13px', padding: '8px 16px' }}
-                >
-                  Add Your First Skill
-                </button>
-              )}
-            </div>
-          </div>
+          <ErrorBanner
+            message={loadError}
+            onRetry={() => setRetryCount(c => c + 1)}
+          />
         )}
 
         {/* Roulette Wheel */}
