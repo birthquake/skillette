@@ -60,6 +60,7 @@ body {
   flex-direction: column;
   position: relative;
   background: var(--primary-gradient);
+  overflow: hidden; /* Prevent App itself from scrolling */
 }
 
 /* Mobile-First Responsive Container */
@@ -68,7 +69,8 @@ body {
   width: 100%;
   margin: 0 auto;
   padding: 0 var(--spacing-md);
-  height: 100%;
+  /* Let container grow with content, not locked to viewport height */
+  min-height: 100%;
   position: relative;
   overflow-x: hidden;
 }
@@ -120,13 +122,14 @@ body {
 /* Main Content Area */
 .main-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  position: relative;
   overflow-y: auto;
   overflow-x: hidden;
+  /* Smooth momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
   /* Account for bottom nav + iPhone home indicator safe area */
   padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  /* Establish a real scroll container — don't use flex column here */
+  position: relative;
 }
 
 /* Cards and Components */
