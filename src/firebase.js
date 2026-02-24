@@ -481,6 +481,83 @@ export const getUserBySkillId = async (skillId) => {
     return null;
   }
 };
+
+// Notification functions
+export const createNotification = async (userId, notification) => {
+  try {
+    const docRef = await addDoc(collection(db, 'notifications'), {
+      userId,
+      ...notification,
+      read: false,
+      createdAt: new Date()
+    });
+    return { success: true, id: docRef.id };
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    return { success: false };
+  }
+};
+
+export const getUnreadNotifications = async (userId) => {
+  try {
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', userId),
+      where('read', '==', false),
+      orderBy('createdAt', 'desc'),
+      limit(20)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (error) {
+    console.error('Error getting notifications:', error);
+    return [];
+  }
+};
+
+export const getAllNotifications = async (userId) => {
+  try {
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc'),
+      limit(30)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (error) {
+    console.error('Error getting all notifications:', error);
+    return [];
+  }
+};
+
+export const markNotificationRead = async (notificationId) => {
+  try {
+    const ref = doc(db, 'notifications', notificationId);
+    await updateDoc(ref, { read: true });
+    return { success: true };
+  } catch (error) {
+    console.error('Error marking notification read:', error);
+    return { success: false };
+  }
+};
+
+export const markAllNotificationsRead = async (userId) => {
+  try {
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', userId),
+      where('read', '==', false)
+    );
+    const snapshot = await getDocs(q);
+    const updates = snapshot.docs.map(d => updateDoc(doc(db, 'notifications', d.id), { read: true }));
+    await Promise.all(updates);
+    return { success: true };
+  } catch (error) {
+    console.error('Error marking all read:', error);
+    return { success: false };
+  }
+};
 // Auth state listener
 export const onAuthStateChange = (callback) => {
   return onAuthStateChanged(auth, callback);
