@@ -15,6 +15,8 @@ import ProfileScreen from './components/Profile';
 import AddSkillScreen from './components/AddSkill';
 import NotificationsScreen from './components/Notifications';
 import Onboarding from './components/Onboarding';
+import AdminScreen from './components/AdminScreen';
+import UserProfileScreen from './components/UserProfileScreen';
 
 // Main App Component (inside AuthProvider)
 function AppContent() {
@@ -35,6 +37,7 @@ function AppContent() {
   const [currentMatchId, setCurrentMatchId] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [viewingUserId, setViewingUserId] = useState(null);
   const [appLoaded, setAppLoaded] = useState(false);
   const [challengeLoading, setChallengeLoading] = useState(false);
 
@@ -291,6 +294,7 @@ function AppContent() {
             onAbandon={abandonChallenge}
             onExpire={expireChallenge}
             onNavigate={navigateToScreen}
+            onViewProfile={(uid) => { setViewingUserId(uid); navigateToScreen('userProfile'); }}
           />
         );
       case 'profile':
@@ -301,7 +305,16 @@ function AppContent() {
             onNavigate={navigateToScreen}
           />
         );
-      case 'notifications':
+      case 'admin':
+      return <AdminScreen onNavigate={navigateToScreen} />;
+    case 'userProfile':
+      return (
+        <UserProfileScreen
+          userId={viewingUserId}
+          onBack={() => navigateToScreen('home')}
+        />
+      );
+    case 'notifications':
       return (
         <NotificationsScreen
           onClose={() => {
