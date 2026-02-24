@@ -193,10 +193,10 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
             <ArrowLeft size={16} />
             Back to Form
           </button>
-          <h2 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px', color: '#1a1a1a' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px', color: '#f0f0f5' }}>
             Record Tutorial Video
           </h2>
-          <p style={{ fontSize: '13px', color: '#666' }}>
+          <p style={{ fontSize: '13px', color: '#8b8fa8' }}>
             Keep it under 30 seconds — show the key steps clearly.
           </p>
         </div>
@@ -228,7 +228,7 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
           <button
             className="btn btn-primary"
             onClick={() => onNavigate('roulette')}
-            style={{ background: 'white', color: '#667eea' }}
+            style={{ background: '#1a1d27', color: '#667eea' }}
           >
             Spin the Roulette
           </button>
@@ -250,7 +250,7 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
       {/* Validation summary — shown when submit is tapped with missing fields */}
       {Object.keys(formErrors).length > 0 && (
         <div style={{
-          background: '#fff5f5', border: '1px solid #ff6b6b',
+          background: '#2a1a1f', border: '1px solid #ff6b6b',
           borderRadius: '12px', padding: '14px 16px', marginBottom: '16px',
           display: 'flex', alignItems: 'center', gap: '10px'
         }}>
@@ -289,7 +289,7 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
           <Type size={16} style={{ color: '#667eea' }} />
-          <label style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a1a' }}>Skill Name</label>
+          <label style={{ fontSize: '16px', fontWeight: '600', color: '#f0f0f5' }}>Skill Name</label>
         </div>
         <input
           type="text"
@@ -307,7 +307,7 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
           {formErrors.title
             ? <span style={{ color: '#ff6b6b', fontSize: '12px' }}>{formErrors.title}</span>
             : <span />}
-          <span style={{ fontSize: '12px', color: '#999' }}>{formData.title.length}/60</span>
+          <span style={{ fontSize: '12px', color: '#555870' }}>{formData.title.length}/60</span>
         </div>
       </div>
 
@@ -315,7 +315,7 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
           <Tag size={16} style={{ color: '#667eea' }} />
-          <label style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a1a' }}>Description</label>
+          <label style={{ fontSize: '16px', fontWeight: '600', color: '#f0f0f5' }}>Description</label>
         </div>
         <textarea
           placeholder="Briefly describe what people will learn to do..."
@@ -334,7 +334,7 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
           {formErrors.description
             ? <span style={{ color: '#ff6b6b', fontSize: '12px' }}>{formErrors.description}</span>
             : <span />}
-          <span style={{ fontSize: '12px', color: '#999' }}>{formData.description.length}/200</span>
+          <span style={{ fontSize: '12px', color: '#555870' }}>{formData.description.length}/200</span>
         </div>
       </div>
 
@@ -342,7 +342,7 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
           <Tag size={16} style={{ color: '#667eea' }} />
-          <label style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a1a' }}>Category</label>
+          <label style={{ fontSize: '16px', fontWeight: '600', color: '#f0f0f5' }}>Category</label>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
           {CATEGORIES.map((cat) => (
@@ -376,7 +376,7 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
           <BarChart2 size={16} style={{ color: '#667eea' }} />
-          <label style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a1a' }}>Difficulty</label>
+          <label style={{ fontSize: '16px', fontWeight: '600', color: '#f0f0f5' }}>Difficulty</label>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           {DIFFICULTIES.map((level) => {
@@ -412,7 +412,7 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
           <Clock size={16} style={{ color: '#667eea' }} />
-          <label style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a1a' }}>How long to learn?</label>
+          <label style={{ fontSize: '16px', fontWeight: '600', color: '#f0f0f5' }}>How long to learn?</label>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
           {DURATIONS.map((d) => (
@@ -443,7 +443,7 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
       {/* Thumbnail Emoji */}
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <label style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a1a' }}>Pick an Emoji</label>
+          <label style={{ fontSize: '16px', fontWeight: '600', color: '#f0f0f5' }}>Pick an Emoji</label>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '6px' }}>
@@ -453,8 +453,8 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
               onClick={() => handleChange('thumbnail', emoji)}
               style={{
                 width: '100%', aspectRatio: '1 / 1', borderRadius: '8px',
-                border: formData.thumbnail === emoji ? '2px solid #667eea' : '1px solid #e2e8f0',
-                background: formData.thumbnail === emoji ? '#667eea10' : 'white',
+                border: formData.thumbnail === emoji ? '2px solid #7c6af7' : '1px solid rgba(255,255,255,0.1)',
+                background: formData.thumbnail === emoji ? 'rgba(124,106,247,0.2)' : '#252838',
                 cursor: 'pointer', fontSize: '18px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'all 0.15s ease', padding: 0
@@ -474,8 +474,8 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
       {/* Tips */}
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <label style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a1a' }}>
-            Tips <span style={{ fontWeight: '400', color: '#999' }}>(optional)</span>
+          <label style={{ fontSize: '16px', fontWeight: '600', color: '#f0f0f5' }}>
+            Tips <span style={{ fontWeight: '400', color: '#555870' }}>(optional)</span>
           </label>
         </div>
 
@@ -487,12 +487,12 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
           rows={3}
           style={{
             width: '100%', padding: '12px', borderRadius: '8px',
-            border: '1px solid #e2e8f0', fontSize: '16px', outline: 'none',
-            resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box'
+            border: '1px solid rgba(255,255,255,0.07)', fontSize: '16px', outline: 'none',
+            resize: 'none', fontFamily: 'inherit', background: '#252838', color: '#f0f0f5', boxSizing: 'border-box'
           }}
         />
         <div style={{ textAlign: 'right', marginTop: '6px' }}>
-          <span style={{ fontSize: '12px', color: '#999' }}>{formData.tips.length}/300</span>
+          <span style={{ fontSize: '12px', color: '#555870' }}>{formData.tips.length}/300</span>
         </div>
       </div>
 
@@ -500,11 +500,11 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
           <Video size={16} style={{ color: '#667eea' }} />
-          <label style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a1a' }}>
-            Tutorial Video <span style={{ fontWeight: '400', color: '#999' }}>(optional)</span>
+          <label style={{ fontSize: '16px', fontWeight: '600', color: '#f0f0f5' }}>
+            Tutorial Video <span style={{ fontWeight: '400', color: '#555870' }}>(optional)</span>
           </label>
         </div>
-        <p style={{ fontSize: '12px', color: '#999', marginBottom: '16px' }}>
+        <p style={{ fontSize: '12px', color: '#555870', marginBottom: '16px' }}>
           Max 30 seconds
         </p>
 
@@ -574,8 +574,8 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
             {isSubmitting && uploadProgress > 0 && (
               <div style={{ marginTop: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '12px', color: '#666' }}>Uploading video...</span>
-                  <span style={{ fontSize: '12px', color: '#666' }}>{uploadProgress}%</span>
+                  <span style={{ fontSize: '12px', color: '#8b8fa8' }}>Uploading video...</span>
+                  <span style={{ fontSize: '12px', color: '#8b8fa8' }}>{uploadProgress}%</span>
                 </div>
                 <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
                   <div style={{
@@ -593,7 +593,7 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
       {/* Error Message */}
       {submitError && (
         <div style={{
-          background: '#fff5f5', border: '1px solid #ff6b6b',
+          background: '#2a1a1f', border: '1px solid #ff6b6b',
           borderRadius: '8px', padding: '12px 16px',
           display: 'flex', alignItems: 'center', gap: '8px',
           color: '#ff6b6b', fontSize: '14px', margin: '0 0 16px'
