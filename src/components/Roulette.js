@@ -197,7 +197,7 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
           className="btn btn-primary"
           onClick={() => onNavigate('addSkill')}
           style={{
-            background: 'white', color: '#667eea',
+            background: '#1a1d27', color: '#667eea',
             fontSize: '16px', padding: '14px 32px',
             borderRadius: '14px', fontWeight: '700'
           }}
@@ -231,10 +231,10 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
           }}>
             Skill Roulette
           </h1>
-          <p style={{ fontSize: '16px', color: '#666666', marginBottom: '8px' }}>
+          <p style={{ fontSize: '16px', color: '#8b8fa8', marginBottom: '8px' }}>
             Spin to get matched with someone's skill to learn!
           </p>
-          <p style={{ fontSize: '13px', color: '#999' }}>
+          <p style={{ fontSize: '13px', color: '#555870' }}>
             {availableSkills.length} skill{availableSkills.length !== 1 ? 's' : ''} available in the pool
           </p>
         </div>
@@ -349,21 +349,21 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
             </div>
             <div style={{
               display: 'flex', alignItems: 'center', gap: '16px',
-              padding: '16px', background: '#f8fafc', borderRadius: '12px',
-              border: '2px solid #4facfe20'
+              padding: '16px', background: '#252838', borderRadius: '12px',
+              border: '2px solid rgba(79,172,254,0.15)'
             }}>
               <div style={{
-                width: '60px', height: '60px', background: 'white', borderRadius: '12px',
+                width: '60px', height: '60px', background: '#1a1d27', borderRadius: '12px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', flexShrink: 0
               }}>
                 {matchedSkill?.thumbnail}
               </div>
               <div style={{ flex: 1 }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px', color: '#1a1a1a' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px', color: '#f0f0f5' }}>
                   {matchedSkill?.title}
                 </h3>
-                <div style={{ fontSize: '14px', color: '#666666', marginBottom: '8px' }}>
+                <div style={{ fontSize: '14px', color: '#8b8fa8', marginBottom: '8px' }}>
                   by {matchedSkill?.author} • {matchedSkill?.duration}
                 </div>
                 <span style={{
@@ -382,7 +382,7 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: '6px',
-              color: '#999', fontSize: '13px', padding: '4px 0',
+              color: '#555870', fontSize: '13px', padding: '4px 0',
               marginTop: '8px'
             }}
           >
@@ -409,21 +409,21 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
             </div>
             <div style={{
               display: 'flex', alignItems: 'center', gap: '16px',
-              padding: '16px', background: '#f8fafc', borderRadius: '12px',
-              border: '2px solid #f5576c20'
+              padding: '16px', background: '#252838', borderRadius: '12px',
+              border: '2px solid rgba(245,87,108,0.15)'
             }}>
               <div style={{
-                width: '60px', height: '60px', background: 'white', borderRadius: '12px',
+                width: '60px', height: '60px', background: '#1a1d27', borderRadius: '12px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', flexShrink: 0
               }}>
                 {yourSkill?.thumbnail}
               </div>
               <div style={{ flex: 1 }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px', color: '#1a1a1a' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px', color: '#f0f0f5' }}>
                   {yourSkill?.title}
                 </h3>
-                <div style={{ fontSize: '14px', color: '#666666', marginBottom: '8px' }}>
+                <div style={{ fontSize: '14px', color: '#8b8fa8', marginBottom: '8px' }}>
                   Your skill • {yourSkill?.duration}
                 </div>
                 <span style={{
@@ -473,7 +473,7 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
         <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '12px', color: 'white' }}>
           Challenge Started!
         </h1>
-        <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.9)', marginBottom: '20px' }}>
+        <p style={{ fontSize: '18px', color: 'rgba(240,240,245,0.85)', marginBottom: '20px' }}>
           Good luck learning {matchedSkill?.title}!
         </p>
       </div>
