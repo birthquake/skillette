@@ -123,7 +123,7 @@ function HomeScreen({ user, onNavigate }) {
           </h1>
           <p style={{ 
             fontSize: '16px', 
-            color: '#666666',
+            color: '#8b8fa8',
             marginBottom: '24px'
           }}>
             Ready to learn something new today?
@@ -194,7 +194,7 @@ function HomeScreen({ user, onNavigate }) {
           </div>
         ) : featuredSkills.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
-            <p style={{ fontSize: '14px', color: '#666666', marginBottom: '16px' }}>
+            <p style={{ fontSize: '14px', color: '#8b8fa8', marginBottom: '16px' }}>
               No skills in the pool yet. Be the first to add one!
             </p>
             <button
@@ -216,7 +216,7 @@ function HomeScreen({ user, onNavigate }) {
                     alignItems: 'center',
                     gap: '12px',
                     padding: '12px',
-                    background: '#f8fafc',
+                    background: '#212436',
                     borderRadius: '12px',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease'
@@ -234,7 +234,7 @@ function HomeScreen({ user, onNavigate }) {
                   <div style={{
                     width: '48px',
                     height: '48px',
-                    background: 'white',
+                    background: '#1a1d27',
                     borderRadius: '12px',
                     display: 'flex',
                     alignItems: 'center',
@@ -251,7 +251,7 @@ function HomeScreen({ user, onNavigate }) {
                       fontSize: '16px', 
                       fontWeight: '600', 
                       marginBottom: '4px',
-                      color: '#1a1a1a'
+                      color: '#f0f0f5'
                     }}>
                       {skill.title}
                     </h3>
@@ -260,7 +260,7 @@ function HomeScreen({ user, onNavigate }) {
                       alignItems: 'center', 
                       gap: '8px',
                       fontSize: '14px',
-                      color: '#666666'
+                      color: '#8b8fa8'
                     }}>
                       <span>by {skill.author}</span>
                       <span>•</span>
@@ -312,11 +312,11 @@ function HomeScreen({ user, onNavigate }) {
                 key={activity.id}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '12px',
-                  padding: '12px', background: '#f8fafc', borderRadius: '10px'
+                  padding: '12px', background: '#252838', borderRadius: '10px'
                 }}
               >
                 <div style={{
-                  width: '40px', height: '40px', background: 'white',
+                  width: '40px', height: '40px', background: '#252838',
                   borderRadius: '10px', display: 'flex', alignItems: 'center',
                   justifyContent: 'center', fontSize: '18px',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.08)', flexShrink: 0
@@ -325,13 +325,13 @@ function HomeScreen({ user, onNavigate }) {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{
-                    fontSize: '14px', fontWeight: '600', color: '#1a1a1a',
+                    fontSize: '14px', fontWeight: '600', color: '#f0f0f5',
                     marginBottom: '2px', overflow: 'hidden',
                     textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                   }}>
                     {activity.skill}
                   </p>
-                  <p style={{ fontSize: '12px', color: '#999' }}>
+                  <p style={{ fontSize: '12px', color: '#555870' }}>
                     Completed · {activity.time}
                   </p>
                 </div>
@@ -369,7 +369,7 @@ function HomeScreen({ user, onNavigate }) {
               <div style={{
                 width: `${dailyProgressPercent}%`,
                 height: '100%',
-                background: 'white',
+                background: '#1a1d27',
                 borderRadius: '4px',
                 transition: 'width 0.5s ease'
               }} />
@@ -381,7 +381,7 @@ function HomeScreen({ user, onNavigate }) {
           <button 
             className="btn"
             onClick={() => onNavigate('roulette')}
-            style={{ background: 'white', color: '#667eea', fontWeight: '600' }}
+            style={{ background: '#1a1d27', color: '#667eea', fontWeight: '600' }}
           >
             Start Challenge
           </button>
