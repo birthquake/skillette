@@ -1,51 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { 
   RotateCcw, 
-  Play, 
-  Clock, 
-  Users, 
-  Star, 
   Shuffle,
   Target,
   Zap,
   ArrowRight,
-  RefreshCw
+  RefreshCw,
+  AlertCircle,
+  Loader
 } from 'lucide-react';
+import { getRandomSkills, getUserSkills } from '../firebase';
+import { useAuth } from '../contexts/AuthContext';
 
-function RouletteScreen({ mockSkills, onStartChallenge, onNavigate }) {
+function RouletteScreen({ onStartChallenge, onNavigate }) {
+  const { currentUser } = useAuth();
+
   const [isSpinning, setIsSpinning] = useState(false);
   const [matchedSkill, setMatchedSkill] = useState(null);
   const [yourSkill, setYourSkill] = useState(null);
-  const [spinStage, setSpinStage] = useState('ready'); // ready, spinning, matched, confirmed
+  const [spinStage, setSpinStage] = useState('ready');
   const [wheelRotation, setWheelRotation] = useState(0);
 
-  // Mock user skills they could teach
-  const userSkills = [
-    {
-      id: 'user1',
-      title: 'Speed Cube Solving',
-      difficulty: 'Hard',
-      duration: '6 min',
-      category: 'Puzzles',
-      thumbnail: '🧩'
-    },
-    {
-      id: 'user2', 
-      title: 'Perfect Coffee Pour',
-      difficulty: 'Medium',
-      duration: '3 min',
-      category: 'Cooking',
-      thumbnail: '☕'
-    },
-    {
-      id: 'user3',
-      title: 'Quick Meditation',
-      difficulty: 'Easy',
-      duration: '2 min',
-      category: 'Wellness',
-      thumbnail: '🧘'
-    }
-  ];
+  const [availableSkills, setAvailableSkills] = useState([]);
+  const [userSkills, setUserSkills] = useState([]);
+  const [loadingSkills, setLoadingSkills] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   const categories = [
     { name: 'Life Hacks', color: '#ff6b6b', emoji: '💡' },
@@ -56,21 +35,54 @@ function RouletteScreen({ mockSkills, onStartChallenge, onNavigate }) {
     { name: 'Sports', color: '#dda0dd', emoji: '⚽' }
   ];
 
+  // Load skills from Firebase on mount
+  useEffect(() => {
+    const loadSkills = async () => {
+      setLoadingSkills(true);
+      setLoadError('');
+      try {
+        // Load skills from other users to learn
+        const otherSkills = await getRandomSkills(currentUser.uid, 20);
+        setAvailableSkills(otherSkills);
+
+        // Load the current user's own skills to teach
+        const mySkills = await getUserSkills(currentUser.uid);
+        setUserSkills(mySkills);
+      } catch (error) {
+        console.error('Error loading skills:', error);
+        setLoadError('Could not load skills. Please try again.');
+      } finally {
+        setLoadingSkills(false);
+      }
+    };
+
+    loadSkills();
+  }, [currentUser.uid]);
+
   const handleSpin = () => {
     if (isSpinning) return;
-    
+
+    // Need at least one skill to learn and one to teach
+    if (availableSkills.length === 0) {
+      setLoadError('No skills available to learn yet. Check back soon!');
+      return;
+    }
+    if (userSkills.length === 0) {
+      setLoadError('You need to add at least one skill before spinning.');
+      return;
+    }
+
+    setLoadError('');
     setIsSpinning(true);
     setSpinStage('spinning');
-    
-    // Generate random rotation (multiple full spins + random angle)
+
     const randomRotation = wheelRotation + 1440 + Math.random() * 360;
     setWheelRotation(randomRotation);
-    
-    // After spin animation, show matched skills
+
     setTimeout(() => {
-      const randomSkill = mockSkills[Math.floor(Math.random() * mockSkills.length)];
+      const randomSkill = availableSkills[Math.floor(Math.random() * availableSkills.length)];
       const randomUserSkill = userSkills[Math.floor(Math.random() * userSkills.length)];
-      
+
       setMatchedSkill(randomSkill);
       setYourSkill(randomUserSkill);
       setSpinStage('matched');
@@ -97,16 +109,27 @@ function RouletteScreen({ mockSkills, onStartChallenge, onNavigate }) {
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
       case 'Easy': return '#4ecdc4';
-      case 'Medium': return '#ffeaa7';
+      case 'Medium': return '#f5a623';
       case 'Hard': return '#ff6b6b';
       default: return '#4ecdc4';
     }
   };
 
+  // Loading state
+  if (loadingSkills) {
+    return (
+      <div className="fade-in" style={{ paddingTop: '60px', textAlign: 'center', color: 'white' }}>
+        <Loader size={48} style={{ animation: 'spin 1s linear infinite', marginBottom: '20px' }} />
+        <h2 style={{ fontSize: '20px', fontWeight: '600' }}>Loading skills...</h2>
+      </div>
+    );
+  }
+
   // Ready to spin state
   if (spinStage === 'ready') {
     return (
       <div className="fade-in" style={{ paddingTop: '20px', paddingBottom: '20px' }}>
+
         {/* Header */}
         <div className="card" style={{ textAlign: 'center' }}>
           <h1 style={{ 
@@ -119,14 +142,43 @@ function RouletteScreen({ mockSkills, onStartChallenge, onNavigate }) {
           }}>
             Skill Roulette
           </h1>
-          <p style={{ 
-            fontSize: '16px', 
-            color: '#666666',
-            marginBottom: '20px'
-          }}>
+          <p style={{ fontSize: '16px', color: '#666666', marginBottom: '8px' }}>
             Spin to get matched with someone's skill to learn!
           </p>
+          <p style={{ fontSize: '13px', color: '#999' }}>
+            {availableSkills.length} skill{availableSkills.length !== 1 ? 's' : ''} available in the pool
+          </p>
         </div>
+
+        {/* Error / Warning */}
+        {loadError && (
+          <div style={{
+            background: '#fff5f5',
+            border: '1px solid #ff6b6b',
+            borderRadius: '12px',
+            padding: '16px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px',
+            marginBottom: '4px'
+          }}>
+            <AlertCircle size={20} style={{ color: '#ff6b6b', flexShrink: 0, marginTop: '2px' }} />
+            <div>
+              <p style={{ fontSize: '14px', color: '#ff6b6b', fontWeight: '600', marginBottom: '4px' }}>
+                {loadError}
+              </p>
+              {userSkills.length === 0 && (
+                <button
+                  className="btn btn-primary"
+                  onClick={() => onNavigate('addSkill')}
+                  style={{ marginTop: '8px', fontSize: '13px', padding: '8px 16px' }}
+                >
+                  Add Your First Skill
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Roulette Wheel */}
         <div className="roulette-container">
@@ -147,7 +199,7 @@ function RouletteScreen({ mockSkills, onStartChallenge, onNavigate }) {
                 ) : (
                   <>
                     <Target size={24} style={{ marginBottom: '4px' }} />
-                    <div style={{ fontSize: '12px' }}>Ready to Spin</div>
+                    <div style={{ fontSize: '12px' }}>Ready</div>
                   </>
                 )}
               </div>
@@ -157,7 +209,7 @@ function RouletteScreen({ mockSkills, onStartChallenge, onNavigate }) {
           <button 
             className="btn btn-primary btn-large"
             onClick={handleSpin}
-            disabled={isSpinning}
+            disabled={isSpinning || availableSkills.length === 0 || userSkills.length === 0}
             style={{ 
               marginTop: '20px',
               transform: isSpinning ? 'scale(0.95)' : 'scale(1)',
@@ -178,21 +230,31 @@ function RouletteScreen({ mockSkills, onStartChallenge, onNavigate }) {
           </button>
         </div>
 
+        {/* No skills prompt */}
+        {userSkills.length === 0 && !loadError && (
+          <div className="card" style={{ textAlign: 'center', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+            <p style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>
+              You need to add a skill first!
+            </p>
+            <p style={{ fontSize: '14px', opacity: 0.9, marginBottom: '16px' }}>
+              Add at least one skill you can teach before you can spin.
+            </p>
+            <button
+              className="btn"
+              onClick={() => onNavigate('addSkill')}
+              style={{ background: 'white', color: '#667eea', fontWeight: '600' }}
+            >
+              Add a Skill
+            </button>
+          </div>
+        )}
+
         {/* Categories Preview */}
         <div className="card">
-          <h3 style={{ 
-            fontSize: '18px', 
-            fontWeight: '600', 
-            marginBottom: '16px',
-            textAlign: 'center'
-          }}>
+          <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', textAlign: 'center' }}>
             🎯 Skill Categories
           </h3>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(3, 1fr)', 
-            gap: '12px' 
-          }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
             {categories.map((category, index) => (
               <div 
                 key={index}
@@ -201,18 +263,11 @@ function RouletteScreen({ mockSkills, onStartChallenge, onNavigate }) {
                   background: `${category.color}20`,
                   border: `2px solid ${category.color}40`,
                   borderRadius: '12px',
-                  textAlign: 'center',
-                  transition: 'all 0.2s ease'
+                  textAlign: 'center'
                 }}
               >
-                <div style={{ fontSize: '24px', marginBottom: '4px' }}>
-                  {category.emoji}
-                </div>
-                <div style={{ 
-                  fontSize: '12px', 
-                  fontWeight: '500',
-                  color: category.color
-                }}>
+                <div style={{ fontSize: '24px', marginBottom: '4px' }}>{category.emoji}</div>
+                <div style={{ fontSize: '12px', fontWeight: '500', color: category.color }}>
                   {category.name}
                 </div>
               </div>
@@ -222,194 +277,96 @@ function RouletteScreen({ mockSkills, onStartChallenge, onNavigate }) {
 
         {/* How It Works */}
         <div className="card">
-          <h3 style={{ 
-            fontSize: '18px', 
-            fontWeight: '600', 
-            marginBottom: '16px'
-          }}>
+          <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
             ⚡ How It Works
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{
-                width: '32px',
-                height: '32px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}>
-                1
+            {[
+              { num: 1, color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', text: <><strong>Spin the wheel</strong> to get matched with someone's skill</> },
+              { num: 2, color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', text: <><strong>Learn their skill</strong> in 24 hours and post proof</> },
+              { num: 3, color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', text: <><strong>They learn yours too</strong> — it's a skill swap!</> }
+            ].map((step) => (
+              <div key={step.num} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '32px', height: '32px',
+                  background: step.color,
+                  borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'white', fontSize: '14px', fontWeight: '600', flexShrink: 0
+                }}>
+                  {step.num}
+                </div>
+                <p style={{ fontSize: '14px', color: '#1a1a1a' }}>{step.text}</p>
               </div>
-              <p style={{ fontSize: '14px', color: '#1a1a1a' }}>
-                <strong>Spin the wheel</strong> to get matched with someone's skill
-              </p>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{
-                width: '32px',
-                height: '32px',
-                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}>
-                2
-              </div>
-              <p style={{ fontSize: '14px', color: '#1a1a1a' }}>
-                <strong>Learn their skill</strong> in 24 hours and post proof
-              </p>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{
-                width: '32px',
-                height: '32px',
-                background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}>
-                3
-              </div>
-              <p style={{ fontSize: '14px', color: '#1a1a1a' }}>
-                <strong>They learn yours too</strong> - it's a skill swap!
-              </p>
-            </div>
+            ))}
           </div>
         </div>
+
       </div>
     );
   }
 
-  // Matched state - show the skills that were matched
+  // Matched state
   if (spinStage === 'matched') {
     return (
       <div className="fade-in" style={{ paddingTop: '20px', paddingBottom: '20px' }}>
         <div className="card" style={{ textAlign: 'center' }}>
-          <h1 style={{ 
-            fontSize: '24px', 
-            fontWeight: '700', 
-            marginBottom: '8px',
-            color: '#4facfe'
-          }}>
+          <h1 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '8px', color: '#4facfe' }}>
             🎉 Perfect Match!
           </h1>
-          <p style={{ 
-            fontSize: '16px', 
-            color: '#666666',
-            marginBottom: '24px'
-          }}>
+          <p style={{ fontSize: '16px', color: '#666666', marginBottom: '24px' }}>
             You've been matched for a skill swap!
           </p>
         </div>
 
-        {/* Skills Exchange */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
           {/* Skill to Learn */}
           <div className="card">
             <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-              <h3 style={{ 
-                fontSize: '18px', 
-                fontWeight: '600',
-                color: '#4facfe',
-                marginBottom: '4px'
-              }}>
-                📚 You'll Learn
-              </h3>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#4facfe' }}>📚 You'll Learn</h3>
             </div>
-            
             <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
-              padding: '16px',
-              background: '#f8fafc',
-              borderRadius: '12px',
+              display: 'flex', alignItems: 'center', gap: '16px',
+              padding: '16px', background: '#f8fafc', borderRadius: '12px',
               border: '2px solid #4facfe20'
             }}>
               <div style={{
-                width: '60px',
-                height: '60px',
-                background: 'white',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '24px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                width: '60px', height: '60px', background: 'white', borderRadius: '12px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', flexShrink: 0
               }}>
                 {matchedSkill?.thumbnail}
               </div>
-              
               <div style={{ flex: 1 }}>
-                <h3 style={{ 
-                  fontSize: '18px', 
-                  fontWeight: '600', 
-                  marginBottom: '4px',
-                  color: '#1a1a1a'
-                }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px', color: '#1a1a1a' }}>
                   {matchedSkill?.title}
                 </h3>
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '8px',
-                  fontSize: '14px',
-                  color: '#666666',
-                  marginBottom: '8px'
-                }}>
-                  <span>by {matchedSkill?.author}</span>
-                  <span>•</span>
-                  <span>{matchedSkill?.duration}</span>
+                <div style={{ fontSize: '14px', color: '#666666', marginBottom: '8px' }}>
+                  by {matchedSkill?.author} • {matchedSkill?.duration}
                 </div>
-                <span 
-                  style={{
-                    background: getDifficultyColor(matchedSkill?.difficulty),
-                    color: 'white',
-                    padding: '4px 8px',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    fontWeight: '500'
-                  }}
-                >
+                <span style={{
+                  background: getDifficultyColor(matchedSkill?.difficulty),
+                  color: 'white', padding: '4px 8px', borderRadius: '6px',
+                  fontSize: '12px', fontWeight: '500'
+                }}>
                   {matchedSkill?.difficulty}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Exchange Arrow */}
-          <div style={{ textAlign: 'center', margin: '8px 0' }}>
+          {/* Arrow */}
+          <div style={{ textAlign: 'center' }}>
             <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '40px',
-              height: '40px',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: '40px', height: '40px',
               background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-              borderRadius: '50%',
-              color: 'white'
+              borderRadius: '50%', color: 'white'
             }}>
               <ArrowRight size={20} style={{ transform: 'rotate(90deg)' }} />
             </div>
-            <p style={{ 
-              fontSize: '14px', 
-              color: '#666666',
-              marginTop: '8px',
-              fontWeight: '500'
-            }}>
+            <p style={{ fontSize: '14px', color: '#666666', marginTop: '8px', fontWeight: '500' }}>
               In exchange, you'll teach
             </p>
           </div>
@@ -417,70 +374,32 @@ function RouletteScreen({ mockSkills, onStartChallenge, onNavigate }) {
           {/* Skill to Teach */}
           <div className="card">
             <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-              <h3 style={{ 
-                fontSize: '18px', 
-                fontWeight: '600',
-                color: '#f5576c',
-                marginBottom: '4px'
-              }}>
-                🎓 You'll Teach
-              </h3>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#f5576c' }}>🎓 You'll Teach</h3>
             </div>
-            
             <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
-              padding: '16px',
-              background: '#f8fafc',
-              borderRadius: '12px',
+              display: 'flex', alignItems: 'center', gap: '16px',
+              padding: '16px', background: '#f8fafc', borderRadius: '12px',
               border: '2px solid #f5576c20'
             }}>
               <div style={{
-                width: '60px',
-                height: '60px',
-                background: 'white',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '24px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                width: '60px', height: '60px', background: 'white', borderRadius: '12px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', flexShrink: 0
               }}>
                 {yourSkill?.thumbnail}
               </div>
-              
               <div style={{ flex: 1 }}>
-                <h3 style={{ 
-                  fontSize: '18px', 
-                  fontWeight: '600', 
-                  marginBottom: '4px',
-                  color: '#1a1a1a'
-                }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px', color: '#1a1a1a' }}>
                   {yourSkill?.title}
                 </h3>
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '8px',
-                  fontSize: '14px',
-                  color: '#666666',
-                  marginBottom: '8px'
-                }}>
-                  <span>Your skill</span>
-                  <span>•</span>
-                  <span>{yourSkill?.duration}</span>
+                <div style={{ fontSize: '14px', color: '#666666', marginBottom: '8px' }}>
+                  Your skill • {yourSkill?.duration}
                 </div>
-                <span 
-                  style={{
-                    background: getDifficultyColor(yourSkill?.difficulty),
-                    color: 'white',
-                    padding: '4px 8px',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    fontWeight: '500'
-                  }}
-                >
+                <span style={{
+                  background: getDifficultyColor(yourSkill?.difficulty),
+                  color: 'white', padding: '4px 8px', borderRadius: '6px',
+                  fontSize: '12px', fontWeight: '500'
+                }}>
                   {yourSkill?.difficulty}
                 </span>
               </div>
@@ -489,24 +408,12 @@ function RouletteScreen({ mockSkills, onStartChallenge, onNavigate }) {
         </div>
 
         {/* Action Buttons */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '12px', 
-          marginTop: '24px' 
-        }}>
-          <button 
-            className="btn btn-outline"
-            onClick={spinAgain}
-            style={{ flex: 1 }}
-          >
+        <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+          <button className="btn btn-outline" onClick={spinAgain} style={{ flex: 1 }}>
             <RotateCcw size={18} />
             Spin Again
           </button>
-          <button 
-            className="btn btn-primary"
-            onClick={confirmMatch}
-            style={{ flex: 2 }}
-          >
+          <button className="btn btn-primary" onClick={confirmMatch} style={{ flex: 2 }}>
             <Zap size={18} />
             Start Challenge!
           </button>
@@ -518,31 +425,14 @@ function RouletteScreen({ mockSkills, onStartChallenge, onNavigate }) {
   // Confirmed state
   if (spinStage === 'confirmed') {
     return (
-      <div className="fade-in" style={{ 
-        paddingTop: '60px', 
-        paddingBottom: '20px',
-        textAlign: 'center'
-      }}>
-        <div style={{
-          fontSize: '64px',
-          marginBottom: '20px',
-          animation: 'spin 1s ease-in-out'
-        }}>
+      <div className="fade-in" style={{ paddingTop: '60px', paddingBottom: '20px', textAlign: 'center' }}>
+        <div style={{ fontSize: '64px', marginBottom: '20px', animation: 'spin 1s ease-in-out' }}>
           🚀
         </div>
-        <h1 style={{ 
-          fontSize: '28px', 
-          fontWeight: '700', 
-          marginBottom: '12px',
-          color: 'white'
-        }}>
+        <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '12px', color: 'white' }}>
           Challenge Started!
         </h1>
-        <p style={{ 
-          fontSize: '18px', 
-          color: 'rgba(255,255,255,0.9)',
-          marginBottom: '20px'
-        }}>
+        <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.9)', marginBottom: '20px' }}>
           Good luck learning {matchedSkill?.title}!
         </p>
       </div>
