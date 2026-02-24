@@ -5,16 +5,11 @@ import {
   Edit3, 
   Trophy, 
   Star, 
-  TrendingUp,
-  Calendar,
   Award,
   Users,
   Target,
   Flame,
-  Settings,
-  LogOut,
   Plus,
-  PlayCircle,
   Clock,
   ChevronRight,
   Medal,
@@ -26,7 +21,6 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
   const [userSkills, setUserSkills] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
-  const [skillCategories, setSkillCategories] = useState([]);
 
   useEffect(() => {
     // Mock user's skills
@@ -106,16 +100,6 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
       { type: 'learned', skill: 'Card Trick', time: '2 days ago', partner: 'Lisa' },
       { type: 'achievement', skill: 'Week Warrior', time: '3 days ago' }
     ]);
-
-    // Mock skill categories breakdown
-    setSkillCategories([
-      { name: 'Life Hacks', count: 5, color: '#ff6b6b' },
-      { name: 'Cooking', count: 3, color: '#4ecdc4' },
-      { name: 'Crafts', count: 7, color: '#45b7d1' },
-      { name: 'Wellness', count: 4, color: '#96ceb4' },
-      { name: 'Music', count: 2, color: '#ffeaa7' },
-      { name: 'Sports', count: 2, color: '#dda0dd' }
-    ]);
   }, [user.skillsLearned]);
 
   const getActivityIcon = (type) => {
@@ -136,6 +120,10 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
       default: return '#4ecdc4';
     }
   };
+
+  // Calculate XP progress within current level
+  const xpIntoLevel = user.xp % 500;
+  const xpProgressPercent = (xpIntoLevel / 500) * 100;
 
   const renderOverview = () => (
     <div style={{ paddingTop: '20px', paddingBottom: '20px' }}>
@@ -207,7 +195,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
             fontWeight: '600'
           }}>
             <Star size={14} />
-            4.8 rating
+            {user.xp} XP total
           </div>
         </div>
 
@@ -263,10 +251,11 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
           marginBottom: '8px'
         }}>
           <div style={{
-            width: '75%',
+            width: `${xpProgressPercent}%`,
             height: '100%',
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            borderRadius: '6px'
+            borderRadius: '6px',
+            transition: 'width 0.5s ease'
           }} />
         </div>
         <div style={{ 
@@ -275,7 +264,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
           fontSize: '12px',
           color: '#666666'
         }}>
-          <span>340 XP</span>
+          <span>{xpIntoLevel} XP</span>
           <span>500 XP to Level {user.level + 1}</span>
         </div>
       </div>
@@ -468,7 +457,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
                   overflow: 'hidden'
                 }}>
                   <div style={{
-                    width: `${achievement.progress * 100}%`,
+                    width: `${Math.min(achievement.progress * 100, 100)}%`,
                     height: '100%',
                     background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
                     borderRadius: '3px'
