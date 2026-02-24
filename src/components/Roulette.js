@@ -157,6 +157,51 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
   }
 
   // Ready to spin state
+  // Gate: user must have at least one skill before they can spin
+  if (spinStage === 'ready' && !loadingSkills && userSkills.length === 0) {
+    return (
+      <div className="fade-in" style={{ paddingTop: '60px', paddingBottom: '20px', textAlign: 'center' }}>
+        <div style={{ fontSize: '72px', marginBottom: '24px' }}>🎯</div>
+        <h1 style={{
+          fontSize: '26px', fontWeight: '700', color: 'white',
+          marginBottom: '12px'
+        }}>
+          Add a Skill First
+        </h1>
+        <p style={{
+          fontSize: '16px', color: 'rgba(255,255,255,0.85)',
+          marginBottom: '8px', lineHeight: '1.6'
+        }}>
+          Skillette is a two-way exchange.
+        </p>
+        <p style={{
+          fontSize: '16px', color: 'rgba(255,255,255,0.85)',
+          marginBottom: '36px', lineHeight: '1.6'
+        }}>
+          To spin and learn from someone else, you need to have at least one skill in the pool that others can learn from you.
+        </p>
+        <button
+          className="btn btn-primary"
+          onClick={() => onNavigate('addSkill')}
+          style={{
+            background: 'white', color: '#667eea',
+            fontSize: '16px', padding: '14px 32px',
+            borderRadius: '14px', fontWeight: '700'
+          }}
+        >
+          <ArrowRight size={18} />
+          Add Your First Skill
+        </button>
+        <p style={{
+          fontSize: '13px', color: 'rgba(255,255,255,0.6)',
+          marginTop: '20px'
+        }}>
+          It only takes a minute — just describe what you can teach.
+        </p>
+      </div>
+    );
+  }
+
   if (spinStage === 'ready') {
     return (
       <div className="fade-in" style={{ paddingTop: '20px', paddingBottom: '20px' }}>
@@ -261,24 +306,7 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
           </button>
         </div>
 
-        {/* No skills prompt */}
-        {userSkills.length === 0 && !loadError && (
-          <div className="card" style={{ textAlign: 'center', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
-            <p style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>
-              You need to add a skill first!
-            </p>
-            <p style={{ fontSize: '14px', opacity: 0.9, marginBottom: '16px' }}>
-              Add at least one skill you can teach before you can spin.
-            </p>
-            <button
-              className="btn"
-              onClick={() => onNavigate('addSkill')}
-              style={{ background: 'white', color: '#667eea', fontWeight: '600' }}
-            >
-              Add a Skill
-            </button>
-          </div>
-        )}
+
 
         {/* Categories Preview */}
         <div className="card">
