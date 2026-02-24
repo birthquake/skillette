@@ -176,13 +176,13 @@ function HomeScreen({ user, onNavigate, mockSkills }) {
               }}
               onClick={() => onNavigate('roulette')}
               onMouseEnter={(e) => {
-                e.target.style.transform = 'translateY(-2px)';
-                e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = 'none';
-              }}
+  e.currentTarget.style.transform = 'translateY(-2px)';
+  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+}}
+onMouseLeave={(e) => {
+  e.currentTarget.style.transform = 'translateY(0)';
+  e.currentTarget.style.boxShadow = 'none';
+}}
             >
               <div style={{
                 width: '48px',
