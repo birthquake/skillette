@@ -128,18 +128,68 @@ function AppContent() {
     }
   };
 
-  // Complete a challenge — updates Firestore, match, and user stats
-  const completeChallenge = async () => {
+  // Abandon a challenge — marks it as abandoned in Firestore and clears state
+  const abandonChallenge = async () => {
+    try {
+      if (currentChallengeId) {
+        await updateChallenge(currentChallengeId, { status: 'abandoned' });
+      }
+      if (currentMatchId) {
+        await updateMatch(currentMatchId, { status: 'abandoned' });
+      }
+    } catch (error) {
+      console.error('Error abandoning challenge:', error);
+    } finally {
+      setCurrentChallenge(null);
+      setCurrentChallengeId(null);
+      setCurrentMatchId(null);
+      setCurrentScreen('home');
+    }
+  };
+
+  // Expire a challenge — called when the timer hits zero
+  const expireChallenge = async () => {
+    try {
+      if (currentChallengeId) {
+        await updateChallenge(currentChallengeId, { status: 'expired' });
+      }
+      if (currentMatchId) {
+        await updateMatch(currentMatchId, { status: 'expired' });
+      }
+    } catch (error) {
+      console.error('Error expiring challenge:', error);
+    } finally {
+      setCurrentChallenge(null);
+      setCurrentChallengeId(null);
+      setCurrentMatchId(null);
+      setCurrentScreen('home');
+    }
+  };
+
+  // Complete a challenge — only valid if a proof video URL is provided
+  const completeChallenge = async (proofVideoUrl = null) => {
     if (!currentChallenge || !isAuthenticated) return;
+
+    // Require proof — no URL means no completion
+    if (!proofVideoUrl) {
+      console.warn('completeChallenge called without proof video URL — ignoring');
+      return;
+    }
 
     try {
       if (currentChallengeId) {
-        await updateChallenge(currentChallengeId, { status: 'completed' });
+        await updateChallenge(currentChallengeId, {
+          status: 'completed',
+          proofVideoUrl
+        });
       }
 
       // Mark the learner's side of the match as done
       if (currentMatchId) {
-        await updateMatch(currentMatchId, { learnerCompleted: true });
+        await updateMatch(currentMatchId, {
+          learnerCompleted: true,
+          proofVideoUrl
+        });
       }
 
       await incrementSkillsLearned();
@@ -215,6 +265,8 @@ function AppContent() {
           <ChallengeScreen 
             challenge={currentChallenge}
             onComplete={completeChallenge}
+            onAbandon={abandonChallenge}
+            onExpire={expireChallenge}
             onNavigate={navigateToScreen}
           />
         );
