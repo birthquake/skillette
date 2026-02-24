@@ -103,6 +103,9 @@ export const createUserDocument = async (user) => {
       totalChallenges: 0,
       completedChallenges: 0,
       
+      // Onboarding
+      hasSeenOnboarding: false,
+
       // Preferences
       preferences: {
         notifications: true,
