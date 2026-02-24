@@ -40,32 +40,27 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--primary-gradient);
   color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow: hidden;
-  height: 100%;
-  /* Prevent content from going behind iPhone notch/dynamic island */
-  padding-top: env(safe-area-inset-top, 0px);
+  /* Let the page scroll naturally — iOS handles this reliably */
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 100%;
 }
 
-/* App Container */
+/* App Container — just a wrapper, not a scroll jail */
 .App {
-  height: 100vh;
-  width: 100vw;
+  min-height: 100vh;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  position: fixed; /* Fixed keeps the shell locked on iOS */
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   background: var(--primary-gradient);
-  overflow: hidden;
 }
 
 /* Mobile-First Responsive Container */
@@ -74,9 +69,6 @@ body {
   width: 100%;
   margin: 0 auto;
   padding: 0 var(--spacing-md);
-  /* Let container grow with content, not locked to viewport height */
-  min-height: 100%;
-  position: relative;
   overflow-x: hidden;
 }
 
@@ -84,14 +76,19 @@ body {
 .nav-bar {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-light);
   padding: var(--spacing-sm) var(--spacing-md);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
+  /* Sit above the safe area on iPhone */
+  padding-top: calc(var(--spacing-sm) + env(safe-area-inset-top, 0px));
 }
 
 .nav-logo {
@@ -124,16 +121,13 @@ body {
   font-weight: 600;
 }
 
-/* Main Content Area */
+/* Main Content Area — not a scroll container, body scrolls */
 .main-content {
-  /* flex: 1 alone doesn't constrain height on iOS — height: 0 forces it */
   flex: 1;
-  height: 0;
-  overflow-y: scroll; /* scroll not auto — more reliable on iOS */
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-  /* Account for bottom nav + iPhone home indicator safe area */
+  width: 100%;
+  /* Top padding clears the sticky top nav (~56px) */
+  padding-top: 56px;
+  /* Bottom padding clears the fixed bottom nav + iPhone home bar */
   padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
 }
 
