@@ -11,6 +11,7 @@ import HomeScreen from './components/Home';
 import RouletteScreen from './components/Roulette';
 import ChallengeScreen from './components/Challenge';
 import ProfileScreen from './components/Profile';
+import AddSkillScreen from './components/AddSkill';
 
 // Main App Component (inside AuthProvider)
 function AppContent() {
@@ -203,6 +204,13 @@ function AppContent() {
             onNavigate={navigateToScreen}
           />
         );
+        case 'addSkill':
+  return (
+    <AddSkillScreen
+      onNavigate={navigateToScreen}
+      onSkillAdded={() => navigateToScreen('profile')}
+    />
+  );
       default:
         return (
           <HomeScreen 
