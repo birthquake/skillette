@@ -446,18 +446,18 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
           <label style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a1a' }}>Pick an Emoji</label>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '8px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '6px' }}>
           {THUMBNAILS.map((emoji) => (
             <button
               key={emoji}
               onClick={() => handleChange('thumbnail', emoji)}
               style={{
-                width: '40px', height: '40px', borderRadius: '8px',
+                width: '100%', aspectRatio: '1 / 1', borderRadius: '8px',
                 border: formData.thumbnail === emoji ? '2px solid #667eea' : '1px solid #e2e8f0',
                 background: formData.thumbnail === emoji ? '#667eea10' : 'white',
-                cursor: 'pointer', fontSize: '20px',
+                cursor: 'pointer', fontSize: '18px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'all 0.15s ease'
+                transition: 'all 0.15s ease', padding: 0
               }}
             >
               {emoji}
