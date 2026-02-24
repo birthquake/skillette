@@ -108,29 +108,27 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     const video = videoRef.current;
     const stream = streamRef.current;
 
+    // Fully reset the video element before assigning a new stream
+    video.pause();
+    video.srcObject = null;
+    video.load();
+
     video.muted = true;
     video.autoplay = true;
     video.playsInline = true;
 
-    // Remove any stale listeners from a previous stream before adding new ones
-    const newVideo = video.cloneNode(false);
-    video.parentNode?.replaceChild(newVideo, video);
-    videoRef.current = newVideo;
+    const onReady = () => {
+      setVideoLoaded(true);
+      video.removeEventListener('loadedmetadata', onReady);
+      video.removeEventListener('canplay', onReady);
+    };
 
-    const markLoaded = () => setVideoLoaded(true);
-    newVideo.addEventListener('loadedmetadata', markLoaded);
-    newVideo.addEventListener('canplay', markLoaded);
-    newVideo.addEventListener('loadeddata', markLoaded);
+    video.addEventListener('loadedmetadata', onReady);
+    video.addEventListener('canplay', onReady);
 
     try {
-      newVideo.muted = true;
-      newVideo.autoplay = true;
-      newVideo.playsInline = true;
-      newVideo.srcObject = stream;
-      newVideo.load();
-      setTimeout(() => {
-        newVideo.play().catch(err => console.log('Play failed:', err));
-      }, 150);
+      video.srcObject = stream;
+      video.play().catch(err => console.log('Play failed:', err));
     } catch (error) {
       console.error('Failed to assign stream to video:', error);
     }
