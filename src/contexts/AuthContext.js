@@ -119,7 +119,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Update user profile
+  // Update user profile — writes to Firestore and immediately
+  // updates local state so the UI reflects changes without a reload.
   const updateProfile = async (updates) => {
     if (!currentUser) {
       return { success: false, error: 'No user logged in' };
@@ -129,7 +130,6 @@ export const AuthProvider = ({ children }) => {
       const result = await updateUserData(currentUser.uid, updates);
       
       if (result.success) {
-        // Update local state
         setUserProfile(prev => ({
           ...prev,
           ...updates,
@@ -175,27 +175,50 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
-  // Update streak
+  // Update streak — compares calendar dates, not raw milliseconds,
+  // so multiple completions in one day don't break the next-day increment.
   const updateStreak = async () => {
     if (!userProfile) return;
-    
+
     const today = new Date();
-    const lastActive = userProfile.lastActiveDate?.toDate?.() || new Date(userProfile.lastActiveDate);
-    const daysSinceActive = Math.floor((today - lastActive) / (1000 * 60 * 60 * 24));
-    
+
+    // Normalise both dates to midnight so we compare calendar days only
+    const toMidnight = (d) => {
+      const copy = new Date(d);
+      copy.setHours(0, 0, 0, 0);
+      return copy;
+    };
+
+    const todayMidnight = toMidnight(today);
+
+    // Handle Firestore Timestamp, JS Date, or missing value
+    let lastActiveRaw = userProfile.lastActiveDate;
+    let lastActiveMidnight;
+    if (!lastActiveRaw) {
+      // No record yet — treat as never active (streak starts at 1)
+      lastActiveMidnight = new Date(0);
+    } else {
+      const lastActiveDate = lastActiveRaw?.toDate?.() || new Date(lastActiveRaw);
+      lastActiveMidnight = toMidnight(lastActiveDate);
+    }
+
+    const daysDiff = Math.round(
+      (todayMidnight - lastActiveMidnight) / (1000 * 60 * 60 * 24)
+    );
+
     let newStreak = userProfile.streak || 0;
-    
-    if (daysSinceActive === 0) {
-      // Same day, don't change streak
-      return;
-    } else if (daysSinceActive === 1) {
-      // Consecutive day, increment streak
+
+    if (daysDiff === 0) {
+      // Already completed something today — streak stays, just update date
+      return await updateProfile({ lastActiveDate: today });
+    } else if (daysDiff === 1) {
+      // Consecutive calendar day — increment
       newStreak += 1;
     } else {
-      // Missed days, reset streak
+      // Missed one or more days — reset to 1
       newStreak = 1;
     }
-    
+
     return await updateProfile({
       streak: newStreak,
       lastActiveDate: today
