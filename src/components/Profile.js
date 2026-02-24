@@ -5,112 +5,107 @@ import {
   Edit3, 
   Trophy, 
   Star, 
-  Award,
   Users,
-  Target,
   Flame,
   Plus,
   Clock,
   ChevronRight,
   Medal,
-  Zap
+  Zap,
+  Loader
 } from 'lucide-react';
+import { getUserSkills, getRecentActivity } from '../firebase';
+import ErrorBanner from './ErrorBanner';
+import { useAuth } from '../contexts/AuthContext';
 
 function ProfileScreen({ user, userProfile, onNavigate }) {
+  const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [userSkills, setUserSkills] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
 
-  useEffect(() => {
-    // Mock user's skills
-    setUserSkills([
-      {
-        id: 1,
-        title: 'Speed Cube Solving',
-        category: 'Puzzles',
-        difficulty: 'Hard',
-        timesShared: 12,
-        rating: 4.8,
-        thumbnail: '🧩',
-        dateAdded: '2024-01-15'
-      },
-      {
-        id: 2,
-        title: 'Perfect Coffee Pour',
-        category: 'Cooking',
-        difficulty: 'Medium',
-        timesShared: 8,
-        rating: 4.9,
-        thumbnail: '☕',
-        dateAdded: '2024-01-20'
-      },
-      {
-        id: 3,
-        title: 'Quick Meditation',
-        category: 'Wellness',
-        difficulty: 'Easy',
-        timesShared: 15,
-        rating: 4.7,
-        thumbnail: '🧘',
-        dateAdded: '2024-02-01'
-      }
-    ]);
+  const [skillsLoading, setSkillsLoading] = useState(true);
+  const [activityLoading, setActivityLoading] = useState(true);
+  const [skillsError, setSkillsError] = useState('');
+  const [activityError, setActivityError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
 
-    // Mock achievements
+  // Load real skills from Firebase
+  useEffect(() => {
+    const loadSkills = async () => {
+      if (!currentUser) return;
+      setSkillsLoading(true);
+      setSkillsError('');
+      try {
+        const skills = await getUserSkills(currentUser.uid);
+        setUserSkills(skills);
+      } catch (error) {
+        console.error('Error loading skills:', error);
+        setSkillsError('Could not load your skills.');
+      } finally {
+        setSkillsLoading(false);
+      }
+    };
+    loadSkills();
+  }, [currentUser, retryCount]);
+
+  // Load real activity from Firebase
+  useEffect(() => {
+    const loadActivity = async () => {
+      if (!currentUser) return;
+      setActivityLoading(true);
+      setActivityError('');
+      try {
+        const activity = await getRecentActivity(currentUser.uid, 10);
+        setRecentActivity(activity);
+      } catch (error) {
+        console.error('Error loading activity:', error);
+        setActivityError('Could not load recent activity.');
+      } finally {
+        setActivityLoading(false);
+      }
+    };
+    loadActivity();
+  }, [currentUser, retryCount]);
+
+  // Achievements are derived from real user stats
+  useEffect(() => {
     setAchievements([
       {
         id: 1,
         title: 'First Swap',
         description: 'Complete your first skill swap',
         icon: '🎯',
-        unlocked: true,
-        date: '2024-01-16'
+        unlocked: user.skillsLearned >= 1,
+        date: user.skillsLearned >= 1 ? 'Unlocked' : null
       },
       {
         id: 2,
         title: 'Week Warrior',
         description: 'Maintain a 7-day streak',
         icon: '🔥',
-        unlocked: true,
-        date: '2024-01-22'
+        unlocked: user.streak >= 7,
+        date: user.streak >= 7 ? 'Unlocked' : null
       },
       {
         id: 3,
         title: 'Teacher',
         description: 'Have 10 people learn your skills',
         icon: '👨‍🏫',
-        unlocked: true,
-        date: '2024-02-05'
+        unlocked: user.skillsTaught >= 10,
+        date: user.skillsTaught >= 10 ? 'Unlocked' : null
       },
       {
         id: 4,
         title: 'Master Learner',
         description: 'Learn 25 skills',
         icon: '🎓',
-        unlocked: false,
-        progress: user.skillsLearned / 25
+        unlocked: user.skillsLearned >= 25,
+        progress: user.skillsLearned >= 25 ? null : user.skillsLearned / 25
       }
     ]);
-
-    // Mock recent activity
-    setRecentActivity([
-      { type: 'completed', skill: 'Paper Airplane', time: '2 hours ago', partner: 'Sarah' },
-      { type: 'taught', skill: 'Coffee Pour', time: '1 day ago', partner: 'Mike' },
-      { type: 'learned', skill: 'Card Trick', time: '2 days ago', partner: 'Lisa' },
-      { type: 'achievement', skill: 'Week Warrior', time: '3 days ago' }
-    ]);
-  }, [user.skillsLearned]);
-
-  const getActivityIcon = (type) => {
-    switch (type) {
-      case 'completed': return <Target size={16} />;
-      case 'taught': return <Users size={16} />;
-      case 'learned': return <Award size={16} />;
-      case 'achievement': return <Trophy size={16} />;
-      default: return <Star size={16} />;
-    }
-  };
+  }, [user.skillsLearned, user.skillsTaught, user.streak]);
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
@@ -326,7 +321,22 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
         </button>
       </div>
 
-      {userSkills.map((skill) => (
+      {skillsLoading ? (
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <Loader size={28} style={{ animation: 'spin 1s linear infinite', color: 'white' }} />
+        </div>
+      ) : skillsError ? (
+        <ErrorBanner message={skillsError} onRetry={() => setRetryCount(c => c + 1)} />
+      ) : userSkills.length === 0 ? (
+        <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎯</div>
+          <p style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a1a', marginBottom: '8px' }}>No skills yet</p>
+          <p style={{ fontSize: '14px', color: '#666', marginBottom: '16px' }}>Add your first skill to get started!</p>
+          <button className="btn btn-primary" onClick={() => onNavigate('addSkill')}>Add a Skill</button>
+        </div>
+      ) : null}
+
+      {!skillsLoading && !skillsError && userSkills.map((skill) => (
         <div key={skill.id} className="card" style={{ marginBottom: '12px' }}>
           <div style={{
             display: 'flex',
@@ -487,57 +497,54 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
 
   const renderActivity = () => (
     <div style={{ paddingTop: '20px', paddingBottom: '20px' }}>
-      <h2 style={{ 
-        fontSize: '24px', 
-        fontWeight: '700', 
-        color: 'white',
-        marginBottom: '20px'
-      }}>
+      <h2 style={{ fontSize: '24px', fontWeight: '700', color: 'white', marginBottom: '20px' }}>
         Recent Activity
       </h2>
 
-      {recentActivity.map((activity, index) => (
-        <div key={index} className="card" style={{ marginBottom: '12px' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white'
-            }}>
-              {getActivityIcon(activity.type)}
-            </div>
-            
-            <div style={{ flex: 1 }}>
-              <p style={{ 
-                fontSize: '14px', 
-                fontWeight: '500',
-                color: '#1a1a1a',
-                marginBottom: '2px'
+      {activityError ? (
+        <ErrorBanner message={activityError} onRetry={() => setRetryCount(c => c + 1)} />
+      ) : activityLoading ? (
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <Loader size={28} style={{ animation: 'spin 1s linear infinite', color: 'white' }} />
+        </div>
+      ) : recentActivity.length === 0 ? (
+        <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎯</div>
+          <p style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a1a', marginBottom: '8px' }}>
+            No activity yet
+          </p>
+          <p style={{ fontSize: '14px', color: '#666' }}>
+            Complete your first skill swap to see it here!
+          </p>
+        </div>
+      ) : (
+        recentActivity.map((activity) => (
+          <div key={activity.id} className="card" style={{ marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{
+                width: '44px', height: '44px', background: 'white',
+                borderRadius: '10px', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', fontSize: '20px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)', flexShrink: 0
               }}>
-                {activity.type === 'completed' && `Completed skill swap: ${activity.skill}`}
-                {activity.type === 'taught' && `Taught ${activity.skill} to ${activity.partner}`}
-                {activity.type === 'learned' && `Learned ${activity.skill} from ${activity.partner}`}
-                {activity.type === 'achievement' && `Unlocked ${activity.skill}`}
-              </p>
-              <p style={{ 
-                fontSize: '12px', 
-                color: '#666666'
-              }}>
-                {activity.time}
-              </p>
+                {activity.thumbnail}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{
+                  fontSize: '14px', fontWeight: '600', color: '#1a1a1a',
+                  marginBottom: '2px', overflow: 'hidden',
+                  textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                }}>
+                  {activity.skill}
+                </p>
+                <p style={{ fontSize: '12px', color: '#666666' }}>
+                  Completed · {activity.time}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))
+      )}
     </div>
   );
 
