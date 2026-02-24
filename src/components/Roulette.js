@@ -9,7 +9,7 @@ import {
   AlertCircle,
   Loader
 } from 'lucide-react';
-import { getRandomSkills, getUserSkills, createMatch, createChallenge } from '../firebase';
+import { getRandomSkills, getUserSkills, createMatch, createChallenge, createNotification } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
 function RouletteScreen({ onStartChallenge, onNavigate }) {
@@ -105,14 +105,23 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
       if (challengeResult.success && matchedSkill?.userId) {
         await createMatch({
           challengeId: challengeResult.id,
-          // The person learning
           learnerId: currentUser.uid,
           learnerSkillId: yourSkill?.id || null,
           learnerSkill: yourSkill,
-          // The person whose skill is being learned
           teacherId: matchedSkill.userId,
           teacherSkillId: matchedSkill?.id || null,
           teacherSkill: matchedSkill,
+        });
+
+        // Notify the teacher that someone is learning their skill
+        await createNotification(matchedSkill.userId, {
+          type: 'new_learner',
+          title: 'Someone is learning your skill! 🎉',
+          body: `${currentUser.displayName || 'Someone'} is learning "${matchedSkill.title}" from you.`,
+          learnerName: currentUser.displayName || 'Anonymous',
+          learnerId: currentUser.uid,
+          skillTitle: matchedSkill.title,
+          skillThumbnail: matchedSkill.thumbnail || '🎯',
         });
       }
 
