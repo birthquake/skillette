@@ -10,10 +10,12 @@ import {
   Users,
   RefreshCw,
   Zap,
-  Loader
+  Loader,
+  Flag
 } from 'lucide-react';
 import VideoRecorder from './VideoRecorder';
 import { uploadVideo, getMatchByChallenge, getUserData } from '../firebase';
+import ReportModal from './ReportModal';
 import { useAuth } from '../contexts/AuthContext';
 
 function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigate }) {
@@ -30,6 +32,7 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState('');
   const [showAbandonConfirm, setShowAbandonConfirm] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   // Calculate time remaining
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -417,6 +420,18 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
             </p>
           </div>
         )}
+        <button
+          onClick={() => setShowReport(true)}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: '6px',
+            color: '#999', fontSize: '13px', marginTop: '12px',
+            padding: '4px 0'
+          }}
+        >
+          <Flag size={13} />
+          Report this skill
+        </button>
       </div>
 
       {/* Instructions */}
@@ -644,6 +659,15 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
         </div>
       </div>
 
+      {/* Report modal */}
+      {showReport && (
+        <ReportModal
+          type="skill"
+          targetId={challenge.skill?.learnSkill?.id}
+          targetTitle={challenge.skill?.learnSkill?.title}
+          onClose={() => setShowReport(false)}
+        />
+      )}
     </div>
   );
 }
