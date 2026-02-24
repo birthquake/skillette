@@ -3,14 +3,10 @@ import {
   RotateCcw, 
   Camera, 
   Play, 
-  Clock, 
   Users, 
-  Star, 
   Trophy, 
   TrendingUp,
   Zap,
-  Target,
-  Award,
   Loader
 } from 'lucide-react';
 import { getRandomSkills } from '../firebase';
