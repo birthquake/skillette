@@ -21,7 +21,7 @@ import {
   Zap
 } from 'lucide-react';
 
-function ProfileScreen({ user, setUser, onNavigate }) {
+function ProfileScreen({ user, userProfile, onNavigate }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [userSkills, setUserSkills] = useState([]);
   const [achievements, setAchievements] = useState([]);
