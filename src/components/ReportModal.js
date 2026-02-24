@@ -44,7 +44,7 @@ function ReportModal({ type, targetId, targetTitle, onClose }) {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div style={{
-        background: 'white', borderRadius: '24px 24px 0 0',
+        background: '#1a1d27', borderRadius: '24px 24px 0 0',
         padding: '28px 24px 40px', width: '100%', maxWidth: '480px',
         boxShadow: '0 -8px 40px rgba(0,0,0,0.2)'
       }}>
@@ -58,10 +58,10 @@ function ReportModal({ type, targetId, targetTitle, onClose }) {
         {submitted ? (
           <div style={{ textAlign: 'center', paddingBottom: '16px' }}>
             <CheckCircle size={48} style={{ color: '#4ecdc4', marginBottom: '16px' }} />
-            <h3 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '8px' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '8px', color: '#f0f0f5' }}>
               Report Submitted
             </h3>
-            <p style={{ fontSize: '15px', color: '#666' }}>
+            <p style={{ fontSize: '15px', color: '#8b8fa8' }}>
               Thanks for keeping Skillette safe. We'll review this shortly.
             </p>
           </div>
@@ -71,23 +71,23 @@ function ReportModal({ type, targetId, targetTitle, onClose }) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <Flag size={20} style={{ color: '#f5576c' }} />
-                <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#f0f0f5' }}>
                   Report {type === 'skill' ? 'Skill' : 'User'}
                 </h3>
               </div>
-              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999' }}>
+              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#555870' }}>
                 <X size={22} />
               </button>
             </div>
 
             {targetTitle && (
-              <p style={{ fontSize: '14px', color: '#666', marginBottom: '20px' }}>
+              <p style={{ fontSize: '14px', color: '#8b8fa8', marginBottom: '20px' }}>
                 Reporting: <strong>"{targetTitle}"</strong>
               </p>
             )}
 
             {/* Reason selector */}
-            <p style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a', marginBottom: '10px' }}>
+            <p style={{ fontSize: '14px', fontWeight: '600', color: '#f0f0f5', marginBottom: '10px' }}>
               Why are you reporting this?
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
@@ -98,9 +98,9 @@ function ReportModal({ type, targetId, targetTitle, onClose }) {
                   style={{
                     padding: '12px 16px', borderRadius: '10px', textAlign: 'left',
                     fontSize: '15px', cursor: 'pointer', fontWeight: reason === r ? '600' : '400',
-                    background: reason === r ? 'linear-gradient(135deg, #667eea10, #764ba220)' : '#f8fafc',
-                    border: reason === r ? '2px solid #667eea' : '2px solid transparent',
-                    color: reason === r ? '#667eea' : '#333',
+                    background: reason === r ? 'rgba(124,106,247,0.15)' : '#252838',
+                    border: reason === r ? '2px solid #7c6af7' : '2px solid rgba(255,255,255,0.07)',
+                    color: reason === r ? '#a594f9' : '#f0f0f5',
                     transition: 'all 0.15s ease'
                   }}
                 >
@@ -117,9 +117,9 @@ function ReportModal({ type, targetId, targetTitle, onClose }) {
               maxLength={300}
               style={{
                 width: '100%', padding: '12px', borderRadius: '10px',
-                border: '1px solid #e2e8f0', fontSize: '14px',
+                border: '1px solid rgba(255,255,255,0.07)', fontSize: '14px',
                 resize: 'none', height: '80px', marginBottom: '20px',
-                fontFamily: 'inherit', color: '#333', boxSizing: 'border-box'
+                fontFamily: 'inherit', color: '#f0f0f5', boxSizing: 'border-box'
               }}
             />
 
