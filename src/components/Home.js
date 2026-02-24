@@ -9,7 +9,8 @@ import {
   Zap,
   Loader
 } from 'lucide-react';
-import { getRandomSkills } from '../firebase';
+import { getRandomSkills, getRecentActivity } from '../firebase';
+import ErrorBanner from './ErrorBanner';
 import { useAuth } from '../contexts/AuthContext';
 
 function HomeScreen({ user, onNavigate }) {
@@ -19,23 +20,45 @@ function HomeScreen({ user, onNavigate }) {
   const [featuredSkills, setFeaturedSkills] = useState([]);
   const [skillsLoading, setSkillsLoading] = useState(true);
 
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [activityError, setActivityError] = useState('');
+  const [skillsError, setSkillsError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
+
   useEffect(() => {
-    // Set greeting based on time of day
     const hour = new Date().getHours();
     if (hour < 12) setGreeting('Good morning');
     else if (hour < 18) setGreeting('Good afternoon');
     else setGreeting('Good evening');
   }, []);
 
+  // Fetch real activity from Firebase
+  useEffect(() => {
+    const loadActivity = async () => {
+      if (!currentUser) return;
+      setActivityError('');
+      try {
+        const activity = await getRecentActivity(currentUser.uid, 5);
+        setRecentActivity(activity);
+      } catch (error) {
+        console.error('Error loading activity:', error);
+        setActivityError('Could not load recent activity.');
+      }
+    };
+    loadActivity();
+  }, [currentUser, retryCount]);
+
   // Fetch real trending skills from Firebase
   useEffect(() => {
     const loadFeaturedSkills = async () => {
       setSkillsLoading(true);
+      setSkillsError('');
       try {
         const skills = await getRandomSkills(currentUser?.uid, 3);
         setFeaturedSkills(skills);
       } catch (error) {
         console.error('Error loading featured skills:', error);
+        setSkillsError('Could not load featured skills.');
       } finally {
         setSkillsLoading(false);
       }
@@ -44,7 +67,7 @@ function HomeScreen({ user, onNavigate }) {
     if (currentUser) {
       loadFeaturedSkills();
     }
-  }, [currentUser]);
+  }, [currentUser, retryCount]);
 
   // Quick stats for the user
   const quickStats = [
@@ -163,7 +186,9 @@ function HomeScreen({ user, onNavigate }) {
           <TrendingUp size={20} style={{ color: '#f5576c' }} />
         </div>
         
-        {skillsLoading ? (
+        {skillsError ? (
+          <ErrorBanner message={skillsError} onRetry={() => setRetryCount(c => c + 1)} />
+        ) : skillsLoading ? (
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
             <Loader size={24} style={{ animation: 'spin 1s linear infinite', color: '#667eea' }} />
           </div>
@@ -268,6 +293,54 @@ function HomeScreen({ user, onNavigate }) {
           </>
         )}
       </div>
+
+      {/* Recent Activity */}
+      {activityError && (
+        <ErrorBanner message={activityError} onRetry={() => setRetryCount(c => c + 1)} />
+      )}
+      {recentActivity.length > 0 && (
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <h2 className="card-title">📈 Recent Activity</h2>
+              <p className="card-subtitle">Your learning journey</p>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {recentActivity.map((activity) => (
+              <div
+                key={activity.id}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '12px',
+                  padding: '12px', background: '#f8fafc', borderRadius: '10px'
+                }}
+              >
+                <div style={{
+                  width: '40px', height: '40px', background: 'white',
+                  borderRadius: '10px', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', fontSize: '18px',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.08)', flexShrink: 0
+                }}>
+                  {activity.thumbnail}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{
+                    fontSize: '14px', fontWeight: '600', color: '#1a1a1a',
+                    marginBottom: '2px', overflow: 'hidden',
+                    textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                  }}>
+                    {activity.skill}
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#999' }}>
+                    Completed · {activity.time}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Daily Challenge */}
       <div className="card" style={{
