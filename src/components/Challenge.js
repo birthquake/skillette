@@ -25,7 +25,6 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
   const [challengeStatus, setChallengeStatus] = useState('active');
   const [videoBlob, setVideoBlob] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
-  const [showInstructions, setShowInstructions] = useState(true);
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [matchedUser, setMatchedUser] = useState(null);
@@ -108,7 +107,6 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
 
   const handleStartRecording = () => {
     setShowVideoRecorder(true);
-    setShowInstructions(false);
   };
 
   const handleVideoReady = (blob, url) => {
@@ -359,7 +357,7 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
         <div className="card-header">
           <div>
             <h2 className="card-title">📚 Learn This Skill</h2>
-            <p className="card-subtitle">Master this and post your proof</p>
+            
           </div>
         </div>
 
@@ -435,26 +433,6 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
       </div>
 
       {/* Instructions */}
-      {showInstructions && (
-        <div className="card" style={{
-          background: 'linear-gradient(135deg, #ffeaa7 0%, #fcb69f 100%)',
-          color: '#8b4513'
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <AlertCircle size={24} style={{ marginBottom: '12px' }} />
-            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '12px' }}>
-              📋 Challenge Instructions
-            </h3>
-            <ul style={{ textAlign: 'left', fontSize: '14px', lineHeight: '1.6', paddingLeft: '20px' }}>
-              <li>Watch the tutorial video above</li>
-              <li>Practice the skill until you can do it</li>
-              <li>Record a 30-second proof video</li>
-              <li>Submit before the timer runs out!</li>
-            </ul>
-          </div>
-        </div>
-      )}
-
       {/* Recording / Upload Interface */}
       {showVideoRecorder ? (
         <VideoRecorder
@@ -468,7 +446,7 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
           <div className="card-header">
             <div>
               <h2 className="card-title">📹 Record Your Proof</h2>
-              <p className="card-subtitle">Show that you've mastered the skill</p>
+              
             </div>
           </div>
 
@@ -544,11 +522,7 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
                 </div>
               )}
 
-              {!isUploading && (
-                <p style={{ fontSize: '14px', color: '#666666', marginBottom: '16px' }}>
-                  Great! Your proof video is ready to submit.
-                </p>
-              )}
+
 
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button
