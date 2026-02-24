@@ -9,7 +9,7 @@ import {
   AlertCircle,
   Loader
 } from 'lucide-react';
-import { getRandomSkills, getUserSkills } from '../firebase';
+import { getRandomSkills, getUserSkills, createMatch, createChallenge } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
 function RouletteScreen({ onStartChallenge, onNavigate }) {
@@ -90,14 +90,45 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
     }, 2000);
   };
 
-  const confirmMatch = () => {
+  const confirmMatch = async () => {
     setSpinStage('confirmed');
-    setTimeout(() => {
-      onStartChallenge({
-        learnSkill: matchedSkill,
-        teachSkill: yourSkill
+
+    try {
+      // Create the challenge document first
+      const challengeResult = await createChallenge({
+        userId: currentUser.uid,
+        skill: { learnSkill: matchedSkill, teachSkill: yourSkill },
+        timeLimit: 24 * 60 * 60 * 1000
       });
-    }, 1000);
+
+      // Create a match linking this user to the skill owner
+      if (challengeResult.success && matchedSkill?.userId) {
+        await createMatch({
+          challengeId: challengeResult.id,
+          // The person learning
+          learnerId: currentUser.uid,
+          learnerSkillId: yourSkill?.id || null,
+          learnerSkill: yourSkill,
+          // The person whose skill is being learned
+          teacherId: matchedSkill.userId,
+          teacherSkillId: matchedSkill?.id || null,
+          teacherSkill: matchedSkill,
+        });
+      }
+
+      setTimeout(() => {
+        onStartChallenge(
+          { learnSkill: matchedSkill, teachSkill: yourSkill },
+          challengeResult.id
+        );
+      }, 1000);
+    } catch (error) {
+      console.error('Error saving match:', error);
+      // Still proceed even if saving fails
+      setTimeout(() => {
+        onStartChallenge({ learnSkill: matchedSkill, teachSkill: yourSkill }, null);
+      }, 1000);
+    }
   };
 
   const spinAgain = () => {
