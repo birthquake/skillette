@@ -3,7 +3,6 @@ import {
   Clock, 
   Camera, 
   Play, 
-  CheckCircle, 
   AlertCircle,
   Upload,
   Target,
