@@ -48,6 +48,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  /* Prevent content from going behind iPhone notch/dynamic island */
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* App Container */
@@ -63,10 +65,12 @@ body {
 /* Mobile-First Responsive Container */
 .container {
   max-width: 430px;
+  width: 100%;
   margin: 0 auto;
   padding: 0 var(--spacing-md);
   height: 100%;
   position: relative;
+  overflow-x: hidden;
 }
 
 /* Navigation Bar */
@@ -120,7 +124,9 @@ body {
   flex-direction: column;
   position: relative;
   overflow-y: auto;
-  padding-bottom: 80px; /* Space for bottom navigation */
+  overflow-x: hidden;
+  /* Account for bottom nav + iPhone home indicator safe area */
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
 }
 
 /* Cards and Components */
@@ -350,6 +356,8 @@ body {
   backdrop-filter: blur(20px);
   border-top: 1px solid var(--border-light);
   padding: var(--spacing-sm) 0;
+  /* Push nav above iPhone home indicator */
+  padding-bottom: calc(var(--spacing-sm) + env(safe-area-inset-bottom, 0px));
   z-index: 100;
 }
 
