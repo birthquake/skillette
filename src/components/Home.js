@@ -303,7 +303,6 @@ function HomeScreen({ user, onNavigate }) {
           <div className="card-header">
             <div>
               <h2 className="card-title">📈 Recent Activity</h2>
-              <p className="card-subtitle">Your learning journey</p>
             </div>
           </div>
 
