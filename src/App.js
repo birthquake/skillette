@@ -183,7 +183,6 @@ function AppContent() {
       case 'roulette':
         return (
           <RouletteScreen 
-            mockSkills={mockSkills}
             onStartChallenge={startChallenge}
             onNavigate={navigateToScreen}
           />
