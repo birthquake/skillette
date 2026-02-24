@@ -272,10 +272,35 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
           <Play size={20} style={{ color: '#4facfe' }} />
         </div>
 
-        <button className="btn btn-outline btn-full" style={{ marginBottom: '16px' }}>
-          <Play size={18} />
-          Watch Tutorial Video
-        </button>
+        {/* Tutorial video player — only shown if the skill has one */}
+        {challenge.skill?.learnSkill?.tutorialVideoUrl ? (
+          <div style={{ marginBottom: '4px' }}>
+            <p style={{ fontSize: '13px', fontWeight: '600', color: '#666', marginBottom: '8px' }}>
+              📹 Tutorial Video
+            </p>
+            <div style={{
+              borderRadius: '12px', overflow: 'hidden',
+              background: '#000', aspectRatio: '9/16', maxHeight: '300px'
+            }}>
+              <video
+                src={challenge.skill.learnSkill.tutorialVideoUrl}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                controls
+                playsInline
+              />
+            </div>
+          </div>
+        ) : (
+          <div style={{
+            padding: '12px', background: '#f8fafc', borderRadius: '8px',
+            display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px'
+          }}>
+            <Camera size={16} style={{ color: '#999', flexShrink: 0 }} />
+            <p style={{ fontSize: '13px', color: '#999', margin: 0 }}>
+              No tutorial video — use the description and tips to guide you.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Instructions */}
