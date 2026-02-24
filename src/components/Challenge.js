@@ -29,12 +29,17 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
   const [matchedUser, setMatchedUser] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState('');
-  const [uploadedVideoUrl, setUploadedVideoUrl] = useState(null);
   const [showAbandonConfirm, setShowAbandonConfirm] = useState(false);
 
   // Calculate time remaining
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const onExpireRef = React.useRef(onExpire);
+  React.useEffect(() => { onExpireRef.current = onExpire; }, [onExpire]);
+
   useEffect(() => {
     if (!challenge) return;
+
+    let expired = false;
 
     const updateTimer = () => {
       const now = new Date().getTime();
@@ -43,10 +48,10 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
 
       if (remaining <= 0) {
         setTimeRemaining(0);
-        if (challengeStatus !== 'expired' && challengeStatus !== 'completed') {
+        if (!expired) {
+          expired = true;
           setChallengeStatus('expired');
-          // Fire onExpire after a short delay so the expired screen shows first
-          setTimeout(() => onExpire && onExpire(), 3000);
+          setTimeout(() => onExpireRef.current && onExpireRef.current(), 3000);
         }
       } else {
         setTimeRemaining(remaining);
@@ -135,8 +140,6 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
       );
 
       if (result.success) {
-        // Store the uploaded URL so we know proof was genuinely uploaded
-        setUploadedVideoUrl(result.url);
         setChallengeStatus('completed');
         setTimeout(() => {
           // Pass the proof URL through so App.js can save it to the challenge doc
