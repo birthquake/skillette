@@ -277,7 +277,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <button 
             className="btn btn-outline"
-            onClick={() => setActiveTab('skills')}
+            onClick={() => onNavigate('addSkill')}
             style={{ 
               justifyContent: 'space-between',
               textAlign: 'left'
@@ -320,7 +320,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
         <h2 style={{ fontSize: '24px', fontWeight: '700', color: 'white' }}>
           Your Skills
         </h2>
-        <button className="btn btn-primary">
+        <button className="btn btn-primary" onClick={() => onNavigate('addSkill')}>
           <Plus size={18} />
           Add Skill
         </button>
