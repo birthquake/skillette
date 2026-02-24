@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase/app';
+import { getAnalytics, logEvent as firebaseLogEvent } from 'firebase/analytics';
 import { 
   getAuth, 
   createUserWithEmailAndPassword, 
@@ -7,7 +8,7 @@ import {
   onAuthStateChanged,
   updateProfile 
 } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, collection, addDoc, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 // Firebase configuration — values loaded from environment variables
@@ -26,6 +27,23 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Analytics — only initializes in browser environments
+let analytics = null;
+try {
+  analytics = getAnalytics(app);
+} catch (e) {
+  // Analytics not available (e.g. SSR or blocked by browser)
+}
+
+// Track an event — safe to call anywhere, silently no-ops if analytics unavailable
+export const trackEvent = (eventName, params = {}) => {
+  try {
+    if (analytics) firebaseLogEvent(analytics, eventName, params);
+  } catch (e) {
+    // Never let analytics errors surface to the user
+  }
+};
 export const storage = getStorage(app);
 
 // Auth functions
@@ -485,6 +503,17 @@ export const getUserBySkillId = async (skillId) => {
   }
 };
 
+
+// Delete a skill
+export const deleteSkill = async (skillId) => {
+  try {
+    await deleteDoc(doc(db, 'skills', skillId));
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting skill:', error);
+    return { success: false };
+  }
+};
 // Notification functions
 export const createNotification = async (userId, notification) => {
   try {
