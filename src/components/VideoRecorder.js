@@ -152,9 +152,21 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       };
 
       mediaRecorderRef.current.onstop = () => {
+        // Stop the live stream so there's no audio feedback
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+        // Clear srcObject BEFORE setting src — browser prioritises srcObject
+        // over src so the blob URL won't play unless we clear it first
+        if (videoRef.current) {
+          videoRef.current.pause();
+          videoRef.current.srcObject = null;
+          videoRef.current.load();
+        }
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-        setVideoBlob(blob);
         const url = URL.createObjectURL(blob);
+        setVideoBlob(blob);
         setVideoUrl(url);
       };
 
@@ -174,13 +186,14 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
   };
 
   const handleRetake = () => {
+    if (videoUrl) URL.revokeObjectURL(videoUrl);
     setVideoBlob(null);
-    setRecordingTime(0);
-    if (videoUrl) {
-      URL.revokeObjectURL(videoUrl);
-    }
     setVideoUrl(null);
+    setRecordingTime(0);
     setVideoLoaded(false);
+    setStreamReady(false);
+    setCameraAccess('pending');
+    // Re-request the camera since we stopped it when recording ended
     requestCameraAccess();
   };
 
@@ -334,7 +347,8 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           ref={videoRef}
           autoPlay
           playsInline
-          muted={!videoBlob}
+          muted={!videoBlob}  
+          controls={!!videoBlob}
           src={videoBlob ? videoUrl : undefined}
           style={{
             width: '100%',
