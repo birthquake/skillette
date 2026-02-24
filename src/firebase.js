@@ -160,7 +160,9 @@ export const updateUserData = async (uid, updates) => {
 // Video upload using Firebase Storage
 export const uploadVideo = async (videoBlob, userId, challengeId, onProgress) => {
   try {
-    const path = `videos/${userId}/${challengeId}_${Date.now()}.webm`;
+    // Derive extension from blob mime type so iOS mp4 and Android webm both work
+    const ext = videoBlob.type.includes('mp4') ? 'mp4' : 'webm';
+    const path = `videos/${userId}/${challengeId}_${Date.now()}.${ext}`;
     const storageRef = ref(storage, path);
 
     return new Promise((resolve, reject) => {
