@@ -13,10 +13,10 @@ import {
   Loader
 } from 'lucide-react';
 import VideoRecorder from './VideoRecorder';
-import { uploadVideo } from '../firebase';
+import { uploadVideo, getMatchByChallenge, getUserData } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
-function ChallengeScreen({ challenge, onComplete, onNavigate }) {
+function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigate }) {
   const { currentUser } = useAuth();
 
   const [timeRemaining, setTimeRemaining] = useState(null);
@@ -26,8 +26,11 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
   const [showInstructions, setShowInstructions] = useState(true);
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [matchedUser, setMatchedUser] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState('');
+  const [uploadedVideoUrl, setUploadedVideoUrl] = useState(null);
+  const [showAbandonConfirm, setShowAbandonConfirm] = useState(false);
 
   // Calculate time remaining
   useEffect(() => {
@@ -40,7 +43,11 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
 
       if (remaining <= 0) {
         setTimeRemaining(0);
-        setChallengeStatus('expired');
+        if (challengeStatus !== 'expired' && challengeStatus !== 'completed') {
+          setChallengeStatus('expired');
+          // Fire onExpire after a short delay so the expired screen shows first
+          setTimeout(() => onExpire && onExpire(), 3000);
+        }
       } else {
         setTimeRemaining(remaining);
       }
@@ -50,6 +57,28 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
   }, [challenge]);
+
+  // Load the matched partner's info if challenge has an ID
+  useEffect(() => {
+    if (!challenge?.id) return;
+    const loadMatch = async () => {
+      try {
+        const match = await getMatchByChallenge(challenge.id);
+        if (match) {
+          const teacherData = await getUserData(match.teacherId);
+          if (teacherData) {
+            setMatchedUser({
+              name: teacherData.name || 'Anonymous',
+              avatar: teacherData.avatar || '👤'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error loading match:', error);
+      }
+    };
+    loadMatch();
+  }, [challenge?.id]);
 
   const formatTime = (milliseconds) => {
     const hours = Math.floor(milliseconds / (1000 * 60 * 60));
@@ -86,14 +115,18 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
   };
 
   const handleSubmitProof = async () => {
-    if (!videoBlob || !currentUser) return;
+    // Hard gate — no video, no completion
+    if (!videoBlob || !currentUser) {
+      setUploadError('You must record a proof video before submitting.');
+      return;
+    }
 
     setIsUploading(true);
     setUploadError('');
     setUploadProgress(0);
 
     try {
-      const challengeId = `${currentUser.uid}_${Date.now()}`;
+      const challengeId = challenge?.id || `${currentUser.uid}_${Date.now()}`;
       const result = await uploadVideo(
         videoBlob,
         currentUser.uid,
@@ -102,9 +135,12 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
       );
 
       if (result.success) {
+        // Store the uploaded URL so we know proof was genuinely uploaded
+        setUploadedVideoUrl(result.url);
         setChallengeStatus('completed');
         setTimeout(() => {
-          onComplete();
+          // Pass the proof URL through so App.js can save it to the challenge doc
+          onComplete(result.url);
         }, 2000);
       } else {
         setUploadError('Upload failed. Please try again.');
@@ -123,6 +159,10 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
     setUploadProgress(0);
     if (videoUrl) URL.revokeObjectURL(videoUrl);
     setVideoUrl(null);
+  };
+
+  const handleAbandon = () => {
+    if (onAbandon) onAbandon();
   };
 
   // No active challenge
@@ -176,6 +216,34 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
             <div style={{ fontSize: '14px' }}>Streak +1</div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Challenge expired
+  if (challengeStatus === 'expired') {
+    return (
+      <div className="fade-in" style={{ paddingTop: '60px', textAlign: 'center', color: 'white' }}>
+        <div style={{ fontSize: '64px', marginBottom: '20px' }}>⏰</div>
+        <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '12px' }}>
+          Time's Up!
+        </h1>
+        <p style={{ fontSize: '16px', opacity: 0.85, marginBottom: '8px' }}>
+          Your challenge for
+        </p>
+        <p style={{ fontSize: '18px', fontWeight: '600', marginBottom: '24px' }}>
+          {challenge.skill?.learnSkill?.title}
+        </p>
+        <p style={{ fontSize: '15px', opacity: 0.75, marginBottom: '36px', lineHeight: '1.6' }}>
+          has expired. Better luck next time — spin again to get a new challenge!
+        </p>
+        <button
+          className="btn btn-primary"
+          onClick={() => onNavigate('roulette')}
+          style={{ background: 'white', color: '#667eea', fontWeight: '700' }}
+        >
+          Spin Again
+        </button>
       </div>
     );
   }
@@ -234,6 +302,51 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
           </div>
         </div>
       </div>
+
+      {/* Abandon confirmation */}
+      {showAbandonConfirm ? (
+        <div className="card" style={{
+          background: 'linear-gradient(135deg, #fff5f5 0%, #ffe4e4 100%)',
+          border: '1px solid #ff6b6b'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ fontSize: '16px', fontWeight: '600', color: '#cc0000', marginBottom: '8px' }}>
+              Abandon this challenge?
+            </p>
+            <p style={{ fontSize: '14px', color: '#666', marginBottom: '20px' }}>
+              You'll lose your progress and will need to spin again for a new challenge.
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                className="btn btn-outline"
+                onClick={() => setShowAbandonConfirm(false)}
+                style={{ flex: 1 }}
+              >
+                Keep Going
+              </button>
+              <button
+                className="btn"
+                onClick={handleAbandon}
+                style={{ flex: 1, background: '#ff6b6b', color: 'white', border: 'none' }}
+              >
+                Yes, Abandon
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ textAlign: 'right', marginBottom: '8px' }}>
+          <button
+            onClick={() => setShowAbandonConfirm(true)}
+            style={{
+              background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)',
+              fontSize: '13px', cursor: 'pointer', textDecoration: 'underline'
+            }}
+          >
+            Abandon challenge
+          </button>
+        </div>
+      )}
 
       {/* Skill to Learn */}
       <div className="card">
@@ -458,9 +571,46 @@ function ChallengeScreen({ challenge, onComplete, onNavigate }) {
         <div className="card-header">
           <div>
             <h2 className="card-title">🎓 You're Teaching</h2>
-            <p className="card-subtitle">Someone else is learning this from you</p>
+            <p className="card-subtitle">
+              {matchedUser
+                ? <><strong>{matchedUser.avatar} {matchedUser.name}</strong> is learning this from you</>
+                : 'Someone is learning this from you'
+              }
+            </p>
           </div>
         </div>
+
+        {/* Matched partner badge */}
+        {matchedUser && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px',
+            padding: '10px 14px', marginBottom: '12px',
+            background: 'linear-gradient(135deg, #f5576c10 0%, #f093fb10 100%)',
+            border: '1px solid #f5576c30', borderRadius: '10px'
+          }}>
+            <div style={{
+              width: '36px', height: '36px', background: 'white',
+              borderRadius: '50%', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', fontSize: '18px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)', flexShrink: 0
+            }}>
+              {matchedUser.avatar}
+            </div>
+            <div>
+              <p style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a', marginBottom: '2px' }}>
+                {matchedUser.name}
+              </p>
+              <p style={{ fontSize: '12px', color: '#666' }}>Your skill swap partner</p>
+            </div>
+            <div style={{
+              marginLeft: 'auto', background: '#f5576c', color: 'white',
+              fontSize: '11px', fontWeight: '600', padding: '3px 8px',
+              borderRadius: '20px'
+            }}>
+              MATCHED
+            </div>
+          </div>
+        )}
 
         <div style={{
           display: 'flex', alignItems: 'center', gap: '16px',
