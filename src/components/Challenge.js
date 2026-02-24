@@ -244,7 +244,7 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
         <button
           className="btn btn-primary"
           onClick={() => onNavigate('roulette')}
-          style={{ background: 'white', color: '#667eea', fontWeight: '700' }}
+          style={{ background: '#1a1d27', color: '#667eea', fontWeight: '700' }}
         >
           Spin Again
         </button>
@@ -299,7 +299,7 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
             <div style={{
               position: 'absolute', top: '50%', left: '50%',
               transform: 'translate(-50%, -50%)',
-              fontSize: '14px', fontWeight: '600', color: '#1a1a1a'
+              fontSize: '14px', fontWeight: '600', color: '#f0f0f5'
             }}>
               {timeRemaining ? Math.round((timeRemaining / challenge.timeLimit) * 100) : 0}%
             </div>
@@ -317,7 +317,7 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
             <p style={{ fontSize: '16px', fontWeight: '600', color: '#cc0000', marginBottom: '8px' }}>
               Abandon this challenge?
             </p>
-            <p style={{ fontSize: '14px', color: '#666', marginBottom: '20px' }}>
+            <p style={{ fontSize: '14px', color: '#8b8fa8', marginBottom: '20px' }}>
               You'll lose your progress and will need to spin again for a new challenge.
             </p>
             <div style={{ display: 'flex', gap: '12px' }}>
@@ -363,20 +363,20 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
 
         <div style={{
           display: 'flex', alignItems: 'center', gap: '16px',
-          padding: '16px', background: '#f8fafc', borderRadius: '12px', marginBottom: '16px'
+          padding: '16px', background: '#212436', borderRadius: '12px', marginBottom: '16px'
         }}>
           <div style={{
-            width: '60px', height: '60px', background: 'white', borderRadius: '12px',
+            width: '60px', height: '60px', background: '#1a1d27', borderRadius: '12px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', flexShrink: 0
           }}>
             {challenge.skill?.learnSkill?.thumbnail}
           </div>
           <div style={{ flex: 1 }}>
-            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px', color: '#1a1a1a' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px', color: '#f0f0f5' }}>
               {challenge.skill?.learnSkill?.title}
             </h3>
-            <div style={{ fontSize: '14px', color: '#666666', marginBottom: '8px' }}>
+            <div style={{ fontSize: '14px', color: '#8b8fa8', marginBottom: '8px' }}>
               by {challenge.skill?.learnSkill?.author} • {challenge.skill?.learnSkill?.duration}
             </div>
             <span style={{
@@ -392,7 +392,7 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
         {/* Tutorial video player — only shown if the skill has one */}
         {challenge.skill?.learnSkill?.tutorialVideoUrl ? (
           <div style={{ marginBottom: '4px' }}>
-            <p style={{ fontSize: '13px', fontWeight: '600', color: '#666', marginBottom: '8px' }}>
+            <p style={{ fontSize: '13px', fontWeight: '600', color: '#8b8fa8', marginBottom: '8px' }}>
               📹 Tutorial Video
             </p>
             <div style={{
@@ -409,11 +409,11 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
           </div>
         ) : (
           <div style={{
-            padding: '12px', background: '#f8fafc', borderRadius: '8px',
+            padding: '12px', background: '#252838', borderRadius: '8px',
             display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px'
           }}>
-            <Camera size={16} style={{ color: '#999', flexShrink: 0 }} />
-            <p style={{ fontSize: '13px', color: '#999', margin: 0 }}>
+            <Camera size={16} style={{ color: '#555870', flexShrink: 0 }} />
+            <p style={{ fontSize: '13px', color: '#555870', margin: 0 }}>
               No tutorial video — use the description and tips to guide you.
             </p>
           </div>
@@ -423,7 +423,7 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: '6px',
-            color: '#999', fontSize: '13px', marginTop: '12px',
+            color: '#555870', fontSize: '13px', marginTop: '12px',
             padding: '4px 0'
           }}
         >
@@ -497,7 +497,7 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
                 <div style={{ marginBottom: '16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
                     <Loader size={16} style={{ animation: 'spin 1s linear infinite', color: '#667eea' }} />
-                    <span style={{ fontSize: '14px', color: '#666' }}>Uploading... {uploadProgress}%</span>
+                    <span style={{ fontSize: '14px', color: '#8b8fa8' }}>Uploading... {uploadProgress}%</span>
                   </div>
                   <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
                     <div style={{
@@ -512,7 +512,7 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
               {/* Upload error */}
               {uploadError && (
                 <div style={{
-                  background: '#fff5f5', border: '1px solid #ff6b6b',
+                  background: '#2a1a1f', border: '1px solid #ff6b6b',
                   borderRadius: '8px', padding: '12px',
                   display: 'flex', alignItems: 'center', gap: '8px',
                   color: '#ff6b6b', fontSize: '14px', marginBottom: '16px'
@@ -581,7 +581,7 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
             border: '1px solid #f5576c30', borderRadius: '10px'
           }}>
             <div style={{
-              width: '36px', height: '36px', background: 'white',
+              width: '36px', height: '36px', background: '#1a1d27',
               borderRadius: '50%', display: 'flex', alignItems: 'center',
               justifyContent: 'center', fontSize: '18px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)', flexShrink: 0
@@ -589,10 +589,10 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
               {matchedUser.avatar}
             </div>
             <div>
-              <p style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a', marginBottom: '2px' }}>
+              <p style={{ fontSize: '14px', fontWeight: '600', color: '#f0f0f5', marginBottom: '2px' }}>
                 {matchedUser.name}
               </p>
-              <p style={{ fontSize: '12px', color: '#666' }}>Your skill swap partner</p>
+              <p style={{ fontSize: '12px', color: '#8b8fa8' }}>Your skill swap partner</p>
             </div>
             <div style={{
               marginLeft: 'auto', background: '#f5576c', color: 'white',
@@ -606,20 +606,20 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
 
         <div style={{
           display: 'flex', alignItems: 'center', gap: '16px',
-          padding: '16px', background: '#f8fafc', borderRadius: '12px'
+          padding: '16px', background: '#212436', borderRadius: '12px'
         }}>
           <div style={{
-            width: '60px', height: '60px', background: 'white', borderRadius: '12px',
+            width: '60px', height: '60px', background: '#1a1d27', borderRadius: '12px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', flexShrink: 0
           }}>
             {challenge.skill?.teachSkill?.thumbnail}
           </div>
           <div style={{ flex: 1 }}>
-            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px', color: '#1a1a1a' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px', color: '#f0f0f5' }}>
               {challenge.skill?.teachSkill?.title}
             </h3>
-            <div style={{ fontSize: '14px', color: '#666666', marginBottom: '8px' }}>
+            <div style={{ fontSize: '14px', color: '#8b8fa8', marginBottom: '8px' }}>
               Your skill • {challenge.skill?.teachSkill?.duration}
             </div>
             <span style={{
