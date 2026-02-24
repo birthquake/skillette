@@ -18,7 +18,7 @@ import { uploadVideo, getMatchByChallenge, getUserData } from '../firebase';
 import ReportModal from './ReportModal';
 import { useAuth } from '../contexts/AuthContext';
 
-function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigate }) {
+function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigate, onViewProfile }) {
   const { currentUser } = useAuth();
 
   const [timeRemaining, setTimeRemaining] = useState(null);
@@ -254,7 +254,7 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
 
   // Main challenge interface
   return (
-    <div className="fade-in" style={{ paddingTop: '20px', paddingBottom: '20px' }}>
+    <div className="fade-in stagger-children" style={{ paddingTop: '20px', paddingBottom: '20px' }}>
 
       {/* Challenge Header */}
       <div className="card">
@@ -588,19 +588,24 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
             }}>
               {matchedUser.avatar}
             </div>
-            <div>
+            <div style={{ flex: 1 }}>
               <p style={{ fontSize: '14px', fontWeight: '600', color: '#f0f0f5', marginBottom: '2px' }}>
                 {matchedUser.name}
               </p>
               <p style={{ fontSize: '12px', color: '#8b8fa8' }}>Your skill swap partner</p>
             </div>
-            <div style={{
-              marginLeft: 'auto', background: '#f5576c', color: 'white',
-              fontSize: '11px', fontWeight: '600', padding: '3px 8px',
-              borderRadius: '20px'
-            }}>
-              MATCHED
-            </div>
+            {onViewProfile && (
+              <button
+                onClick={() => onViewProfile(matchedUser.uid || matchedUser.id)}
+                style={{
+                  background: 'rgba(124,106,247,0.15)', border: '1px solid rgba(124,106,247,0.3)',
+                  borderRadius: '8px', padding: '6px 10px', cursor: 'pointer',
+                  fontSize: '12px', fontWeight: '600', color: '#a594f9'
+                }}
+              >
+                View
+              </button>
+            )}
           </div>
         )}
 
