@@ -47,7 +47,8 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow: hidden;
+  height: 100%;
   /* Prevent content from going behind iPhone notch/dynamic island */
   padding-top: env(safe-area-inset-top, 0px);
 }
@@ -58,9 +59,13 @@ body {
   width: 100vw;
   display: flex;
   flex-direction: column;
-  position: relative;
+  position: fixed; /* Fixed keeps the shell locked on iOS */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: var(--primary-gradient);
-  overflow: hidden; /* Prevent App itself from scrolling */
+  overflow: hidden;
 }
 
 /* Mobile-First Responsive Container */
@@ -121,15 +126,15 @@ body {
 
 /* Main Content Area */
 .main-content {
+  /* flex: 1 alone doesn't constrain height on iOS — height: 0 forces it */
   flex: 1;
-  overflow-y: auto;
+  height: 0;
+  overflow-y: scroll; /* scroll not auto — more reliable on iOS */
   overflow-x: hidden;
-  /* Smooth momentum scrolling on iOS */
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
   /* Account for bottom nav + iPhone home indicator safe area */
   padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
-  /* Establish a real scroll container — don't use flex column here */
-  position: relative;
 }
 
 /* Cards and Components */
