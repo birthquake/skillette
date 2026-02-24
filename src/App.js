@@ -4,7 +4,7 @@ import './App.css';
 
 // Import Firebase context and functions
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { createChallenge, getActiveChallenge, updateChallenge } from './firebase';
+import { createChallenge, getActiveChallenge, updateChallenge, getMatchByChallenge, updateMatch } from './firebase';
 
 // Import components
 import LoginScreen from './components/Login';
@@ -30,6 +30,7 @@ function AppContent() {
   const [currentScreen, setCurrentScreen] = useState('home');
   const [currentChallenge, setCurrentChallenge] = useState(null);
   const [currentChallengeId, setCurrentChallengeId] = useState(null);
+  const [currentMatchId, setCurrentMatchId] = useState(null);
   const [appLoaded, setAppLoaded] = useState(false);
   const [challengeLoading, setChallengeLoading] = useState(false);
 
@@ -91,8 +92,8 @@ function AppContent() {
     setCurrentScreen(screen);
   };
 
-  // Start a new challenge — saves to Firestore
-  const startChallenge = async (skill) => {
+  // Start a new challenge — challengeId may already exist if Roulette created it
+  const startChallenge = async (skill, existingChallengeId = null) => {
     const challenge = {
       skill,
       startTime: new Date(),
@@ -103,32 +104,44 @@ function AppContent() {
     setCurrentChallenge(challenge);
     setCurrentScreen('challenge');
 
-    // Save to Firestore so it persists across refreshes
     try {
-      const result = await createChallenge({
-        userId: currentUser.uid,
-        skill,
-        timeLimit: challenge.timeLimit
-      });
-      if (result.success) {
-        setCurrentChallengeId(result.id);
+      let challengeId = existingChallengeId;
+
+      // Only create a new challenge doc if Roulette didn't already create one
+      if (!challengeId) {
+        const result = await createChallenge({
+          userId: currentUser.uid,
+          skill,
+          timeLimit: challenge.timeLimit
+        });
+        if (result.success) challengeId = result.id;
+      }
+
+      if (challengeId) {
+        setCurrentChallengeId(challengeId);
+        // Look up any match linked to this challenge
+        const match = await getMatchByChallenge(challengeId);
+        if (match) setCurrentMatchId(match.id);
       }
     } catch (error) {
-      console.error('Error saving challenge to Firestore:', error);
+      console.error('Error setting up challenge:', error);
     }
   };
 
-  // Complete a challenge — updates Firestore and user stats
+  // Complete a challenge — updates Firestore, match, and user stats
   const completeChallenge = async () => {
     if (!currentChallenge || !isAuthenticated) return;
 
     try {
-      // Mark challenge as completed in Firestore
       if (currentChallengeId) {
         await updateChallenge(currentChallengeId, { status: 'completed' });
       }
 
-      // Update user stats
+      // Mark the learner's side of the match as done
+      if (currentMatchId) {
+        await updateMatch(currentMatchId, { learnerCompleted: true });
+      }
+
       await incrementSkillsLearned();
       await updateStreak();
     } catch (error) {
@@ -136,6 +149,7 @@ function AppContent() {
     } finally {
       setCurrentChallenge(null);
       setCurrentChallengeId(null);
+      setCurrentMatchId(null);
       setCurrentScreen('home');
     }
   };
