@@ -325,33 +325,6 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
           </div>
         </div>
 
-        {/* How It Works */}
-        <div className="card">
-          <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
-            ⚡ How It Works
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {[
-              { num: 1, color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', text: <><strong>Spin the wheel</strong> to get matched with someone's skill</> },
-              { num: 2, color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', text: <><strong>Learn their skill</strong> in 24 hours and post proof</> },
-              { num: 3, color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', text: <><strong>They learn yours too</strong> — it's a skill swap!</> }
-            ].map((step) => (
-              <div key={step.num} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{
-                  width: '32px', height: '32px',
-                  background: step.color,
-                  borderRadius: '50%',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'white', fontSize: '14px', fontWeight: '600', flexShrink: 0
-                }}>
-                  {step.num}
-                </div>
-                <p style={{ fontSize: '14px', color: '#1a1a1a' }}>{step.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
       </div>
     );
   }
@@ -364,9 +337,7 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
           <h1 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '8px', color: '#4facfe' }}>
             🎉 Perfect Match!
           </h1>
-          <p style={{ fontSize: '16px', color: '#666666', marginBottom: '24px' }}>
-            You've been matched for a skill swap!
-          </p>
+
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -429,9 +400,6 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
             }}>
               <ArrowRight size={20} style={{ transform: 'rotate(90deg)' }} />
             </div>
-            <p style={{ fontSize: '14px', color: '#666666', marginTop: '8px', fontWeight: '500' }}>
-              In exchange, you'll teach
-            </p>
           </div>
 
           {/* Skill to Teach */}
