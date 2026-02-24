@@ -1,31 +1,45 @@
 /* Global CSS Variables */
 :root {
-  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* Brand */
+  --primary-gradient: linear-gradient(135deg, #7c6af7 0%, #9c59f5 100%);
   --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   --warning-gradient: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-  
-  --text-primary: #1a1a1a;
-  --text-secondary: #666666;
+  --primary-color: #7c6af7;
+  --primary-dark: #6356d4;
+
+  /* Dark mode backgrounds */
+  --bg-base: #0f1117;
+  --bg-card: #1a1d27;
+  --bg-card-elevated: #212436;
+  --bg-input: #252838;
+
+  /* Text */
+  --text-primary: #f0f0f5;
+  --text-secondary: #8b8fa8;
+  --text-muted: #555870;
   --text-light: #ffffff;
-  
-  --background-white: #ffffff;
-  --background-light: #f8fafc;
-  --background-card: #ffffff;
-  
-  --border-light: #e2e8f0;
-  --border-medium: #cbd5e0;
-  
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
-  
+
+  /* Borders */
+  --border-light: rgba(255, 255, 255, 0.07);
+  --border-medium: rgba(255, 255, 255, 0.12);
+
+  /* Shadows — stronger for dark mode */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.6);
+
+  /* Legacy aliases kept so inline styles still work */
+  --background-white: #1a1d27;
+  --background-light: #212436;
+  --background-card: #1a1d27;
+
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 24px;
-  
+
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
@@ -42,7 +56,7 @@
 
 html, body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--primary-gradient);
+  background: var(--bg-base);
   color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -60,7 +74,7 @@ html, body {
   width: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--primary-gradient);
+  background: var(--bg-base);
 }
 
 /* Mobile-First Responsive Container */
@@ -74,7 +88,7 @@ html, body {
 
 /* Navigation Bar */
 .nav-bar {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(15, 17, 23, 0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-light);
@@ -133,11 +147,12 @@ html, body {
 
 /* Cards and Components */
 .card {
-  background: var(--background-card);
+  background: var(--bg-card);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   padding: var(--spacing-lg);
   margin-bottom: var(--spacing-md);
+  border: 1px solid var(--border-light);
 }
 
 .card-header {
@@ -201,7 +216,7 @@ html, body {
 }
 
 .btn-outline:hover {
-  background: var(--background-light);
+  background: var(--bg-card-elevated);
 }
 
 .btn-large {
@@ -255,7 +270,7 @@ html, body {
 .roulette-center {
   width: 120px;
   height: 120px;
-  background: white;
+  background: var(--bg-card);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -306,7 +321,7 @@ html, body {
 .progress-bar {
   width: 100%;
   height: 8px;
-  background: var(--border-light);
+  background: var(--bg-card-elevated);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -328,7 +343,7 @@ html, body {
 .stat-item {
   text-align: center;
   padding: var(--spacing-md);
-  background: var(--background-card);
+  background: var(--bg-card-elevated);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
 }
@@ -354,14 +369,14 @@ html, body {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(255, 255, 255, 0.97);
+  background: rgba(15, 17, 23, 0.96);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-top: 1px solid var(--border-light);
   padding: 8px 16px 0;
   padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
   z-index: 100;
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
 }
 
 .bottom-nav-content {
@@ -380,7 +395,7 @@ html, body {
   padding: 6px 16px 8px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  color: #b0b8c9;
+  color: #555870;
   background: none;
   border: none;
   border-radius: 16px;
@@ -390,7 +405,7 @@ html, body {
 }
 
 .nav-item.active {
-  color: #667eea;
+  color: #7c6af7;
   transform: translateY(-2px);
 }
 
@@ -403,7 +418,7 @@ html, body {
   width: 32px;
   height: 3px;
   border-radius: 0 0 3px 3px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-gradient);
 }
 
 .nav-item-label {
