@@ -81,6 +81,18 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [streamReady, videoLoaded]);
 
+  // Once the blob URL is ready, assign it to the video element and play
+  useEffect(() => {
+    if (!videoUrl || !videoRef.current) return;
+    const video = videoRef.current;
+    video.src = videoUrl;
+    video.muted = false;
+    video.load();
+    video.play().catch(() => {
+      // Autoplay blocked — that's fine, user can tap play manually
+    });
+  }, [videoUrl]);
+
   // Recording timer — auto-stops when maxDuration is reached
   useEffect(() => {
     if (isRecording) {
@@ -347,9 +359,8 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           ref={videoRef}
           autoPlay
           playsInline
-          muted={!videoBlob}  
+          muted={!videoBlob}
           controls={!!videoBlob}
-          src={videoBlob ? videoUrl : undefined}
           style={{
             width: '100%',
             height: '100%',
