@@ -7,9 +7,11 @@ import {
   ArrowRight,
   RefreshCw,
   AlertCircle,
-  Loader
+  Loader,
+  Flag
 } from 'lucide-react';
 import { getRandomSkills, getUserSkills, createMatch, createChallenge, createNotification } from '../firebase';
+import ReportModal from './ReportModal';
 import { useAuth } from '../contexts/AuthContext';
 
 function RouletteScreen({ onStartChallenge, onNavigate }) {
@@ -25,6 +27,7 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
   const [userSkills, setUserSkills] = useState([]);
   const [loadingSkills, setLoadingSkills] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [showReport, setShowReport] = useState(false);
 
   const categories = [
     { name: 'Life Hacks', color: '#ff6b6b', emoji: '💡' },
@@ -424,6 +427,19 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
             </div>
           </div>
 
+          <button
+            onClick={() => setShowReport(true)}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '6px',
+              color: '#999', fontSize: '13px', padding: '4px 0',
+              marginTop: '8px'
+            }}
+          >
+            <Flag size={13} />
+            Report this skill
+          </button>
+
           {/* Arrow */}
           <div style={{ textAlign: 'center' }}>
             <div style={{
@@ -486,6 +502,16 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
             Start Challenge!
           </button>
         </div>
+
+      {/* Report modal */}
+      {showReport && (
+        <ReportModal
+          type="skill"
+          targetId={matchedSkill?.id}
+          targetTitle={matchedSkill?.title}
+          onClose={() => setShowReport(false)}
+        />
+      )}
       </div>
     );
   }
