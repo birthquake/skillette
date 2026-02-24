@@ -352,13 +352,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           </span>
         </div>
 
-        <div style={{ 
-          fontSize: '10px', 
-          color: '#666', 
-          marginTop: '8px'
-        }}>
-          Stream: {streamReady ? '✅' : '❌'} • Video: {videoLoaded ? '✅' : '❌'}
-        </div>
+        
       </div>
 
       <div style={{
