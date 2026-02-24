@@ -432,24 +432,7 @@ html, body {
   font-weight: 700;
 }
 
-/* Animations and Transitions */
-.fade-in {
-  animation: fadeIn 0.5s ease-in;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.slide-up {
-  animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
+/* Animations — see extended block below */
 
 /* Mobile Responsive */
 @media (max-width: 480px) {
@@ -471,4 +454,129 @@ html, body {
     height: 100px;
     font-size: 14px;
   }
+}
+
+/* ─── Skeleton Loading ─────────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #252838 0%,
+    #2e3248 40%,
+    #252838 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Page Transitions ─────────────────────────────────────────────────────── */
+.fade-in {
+  animation: fadeIn 0.3s ease-out both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in-fast {
+  animation: fadeIn 0.15s ease-out both;
+}
+
+.slide-up {
+  animation: slideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Staggered children — add to parent, children get delay via nth-child */
+.stagger-children > * {
+  animation: fadeIn 0.3s ease-out both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.10s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.20s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+
+/* ─── Micro-interactions ───────────────────────────────────────────────────── */
+
+/* Cards — subtle lift on press */
+.card-interactive {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card-interactive:active {
+  transform: scale(0.985);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Buttons — satisfying press feedback */
+.btn {
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Primary button glow on hover */
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 0 20px rgba(124, 106, 247, 0.35), var(--shadow-lg);
+  transform: translateY(-1px);
+}
+
+/* Nav items — springy tap */
+.nav-item:active {
+  transform: scale(0.88) translateY(0);
+  transition: transform 0.08s ease;
+}
+
+/* ─── Roulette spin ────────────────────────────────────────────────────────── */
+.roulette-wheel.spinning {
+  animation: spinWheel 1.8s cubic-bezier(0.17, 0.67, 0.21, 1) forwards;
+}
+
+@keyframes spinWheel {
+  0%   { transform: rotate(0deg) scale(1); }
+  15%  { transform: rotate(180deg) scale(1.04); }
+  100% { transform: rotate(1440deg) scale(1); }
+}
+
+/* ─── Success pulse ────────────────────────────────────────────────────────── */
+.pulse-success {
+  animation: pulseSuccess 0.5s ease-out;
+}
+@keyframes pulseSuccess {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* ─── Bounce in ────────────────────────────────────────────────────────────── */
+.bounce-in {
+  animation: bounceIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes bounceIn {
+  from { opacity: 0; transform: scale(0.75); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ─── Floating emoji on roulette matched ──────────────────────────────────── */
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
 }
