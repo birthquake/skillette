@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   Camera, 
   Square, 
-  Play, 
   RotateCcw, 
   CheckCircle,
   AlertCircle,
@@ -16,7 +15,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
   const [videoBlob, setVideoBlob] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
   const [cameraAccess, setCameraAccess] = useState('pending');
-  const [isPlaying, setIsPlaying] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [streamReady, setStreamReady] = useState(false);
   const [currentCamera, setCurrentCamera] = useState('user');
@@ -27,23 +25,63 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
 
-  // Request camera access with current camera setting
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setVideoLoaded(false);
+    setStreamReady(false);
+  }, []);
+
+  const requestCameraAccess = useCallback(async () => {
+    try {
+      const constraints = {
+        video: { facingMode: currentCamera },
+        audio: true
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
+      setStreamReady(true);
+      setCameraAccess('granted');
+    } catch (error) {
+      console.error('Camera access error:', error);
+      if (error.name === 'NotAllowedError') {
+        setCameraAccess('denied');
+      } else {
+        setCameraAccess('error');
+      }
+    }
+  }, [currentCamera]);
+
+  const handleStopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  }, [isRecording]);
+
+  // Request camera access when component mounts or camera switches
   useEffect(() => {
     requestCameraAccess();
     return () => {
       stopCamera();
     };
-  }, [currentCamera]); // Add currentCamera as dependency
+  }, [requestCameraAccess, stopCamera]);
 
-  // Set up video when both stream and element are ready
+  // Set up video element once stream is ready
   useEffect(() => {
     if (streamReady && videoRef.current && !videoLoaded) {
-      console.log('Both stream and video element ready - setting up video...');
       setupVideoElement();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [streamReady, videoLoaded]);
 
-  // Recording timer
+  // Recording timer — auto-stops when maxDuration is reached
   useEffect(() => {
     if (isRecording) {
       timerRef.current = setInterval(() => {
@@ -56,54 +94,17 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
         });
       }, 1000);
     } else {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
     }
 
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isRecording, maxDuration]);
-
-  const requestCameraAccess = async () => {
-    try {
-      console.log('Requesting camera access...');
-      
-      const constraints = {
-        video: { facingMode: currentCamera },
-        audio: true
-      };
-
-      console.log('Using constraints:', constraints);
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log('Camera access granted, stream:', stream);
-      
-      streamRef.current = stream;
-      setStreamReady(true);
-      setCameraAccess('granted');
-      
-    } catch (error) {
-      console.error('Camera access error:', error);
-      if (error.name === 'NotAllowedError') {
-        setCameraAccess('denied');
-      } else {
-        setCameraAccess('error');
-      }
-    }
-  };
+  }, [isRecording, maxDuration, handleStopRecording]);
 
   const setupVideoElement = () => {
-    if (!videoRef.current || !streamRef.current) {
-      console.log('Video element or stream not ready');
-      return;
-    }
+    if (!videoRef.current || !streamRef.current) return;
 
-    console.log('Setting up video element...');
-    
     const video = videoRef.current;
     const stream = streamRef.current;
 
@@ -111,66 +112,21 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
     video.autoplay = true;
     video.playsInline = true;
 
-    const handleLoadedMetadata = () => {
-      console.log('Video metadata loaded');
-      console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight);
-      setVideoLoaded(true);
-    };
+    const markLoaded = () => setVideoLoaded(true);
 
-    const handleCanPlay = () => {
-      console.log('Video can play');
-      setVideoLoaded(true);
-    };
-
-    const handleLoadedData = () => {
-      console.log('Video data loaded');
-      setVideoLoaded(true);
-    };
-
-    const handleError = (e) => {
-      console.error('Video error:', e);
-    };
-
-    const handleLoadStart = () => {
-      console.log('Video load started');
-    };
-
-    video.addEventListener('loadedmetadata', handleLoadedMetadata);
-    video.addEventListener('canplay', handleCanPlay);
-    video.addEventListener('loadeddata', handleLoadedData);
-    video.addEventListener('error', handleError);
-    video.addEventListener('loadstart', handleLoadStart);
+    video.addEventListener('loadedmetadata', markLoaded);
+    video.addEventListener('canplay', markLoaded);
+    video.addEventListener('loadeddata', markLoaded);
 
     try {
       video.srcObject = stream;
-      console.log('Stream assigned to video element');
-      
       video.load();
-      
       setTimeout(() => {
-        video.play().then(() => {
-          console.log('Video playing');
-        }).catch(err => {
-          console.log('Play failed:', err);
-        });
+        video.play().catch(err => console.log('Play failed:', err));
       }, 100);
-      
     } catch (error) {
       console.error('Failed to assign stream to video:', error);
     }
-  };
-
-  const stopCamera = () => {
-    console.log('Stopping camera...');
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setVideoLoaded(false);
-    setStreamReady(false);
   };
 
   const handleStartRecording = () => {
@@ -179,7 +135,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       return;
     }
 
-    console.log('Starting recording...');
     chunksRef.current = [];
     
     try {
@@ -192,13 +147,10 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       };
 
       mediaRecorderRef.current.onstop = () => {
-        console.log('Recording stopped, creating blob...');
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
         setVideoBlob(blob);
-        
         const url = URL.createObjectURL(blob);
         setVideoUrl(url);
-        console.log('Video blob created for playback');
       };
 
       mediaRecorderRef.current.onerror = (event) => {
@@ -210,49 +162,37 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
       mediaRecorderRef.current.start();
       setIsRecording(true);
       setRecordingTime(0);
-      
     } catch (error) {
       console.error('Failed to start recording:', error);
       alert(`Recording failed: ${error.message}`);
     }
   };
 
-  const handleStopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
   const handleRetake = () => {
     setVideoBlob(null);
-    setVideoUrl(null);
     setRecordingTime(0);
     if (videoUrl) {
       URL.revokeObjectURL(videoUrl);
     }
+    setVideoUrl(null);
     setVideoLoaded(false);
     requestCameraAccess();
   };
 
   const handleSubmit = () => {
     if (videoBlob && onVideoReady) {
-      console.log('Submitting video blob:', videoBlob.size, 'bytes');
       onVideoReady(videoBlob, videoUrl);
     }
   };
 
   const switchCamera = () => {
-    console.log('Switching camera from', currentCamera, 'to', currentCamera === 'user' ? 'environment' : 'user');
     const newCamera = currentCamera === 'user' ? 'environment' : 'user';
     setCurrentCamera(newCamera);
     setVideoLoaded(false);
     setStreamReady(false);
-    
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
-    
     requestCameraAccess();
   };
 
@@ -351,8 +291,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
             {formatTime(recordingTime)} / {formatTime(maxDuration)}
           </span>
         </div>
-
-        
       </div>
 
       <div style={{
@@ -385,7 +323,7 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           ref={videoRef}
           autoPlay
           playsInline
-          muted={videoBlob ? false : true}
+          muted={!videoBlob}
           src={videoBlob ? videoUrl : undefined}
           style={{
             width: '100%',
@@ -393,9 +331,6 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
             objectFit: 'cover',
             display: videoLoaded || videoBlob ? 'block' : 'none'
           }}
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-          onEnded={() => setIsPlaying(false)}
         />
 
         {isRecording && (
@@ -478,30 +413,24 @@ function VideoRecorder({ onVideoReady, onCancel, maxDuration = 30, skillTitle = 
           </button>
         </div>
       ) : (
-        <div>
-          <div style={{ 
-            display: 'flex', 
-            gap: '12px',
-            marginBottom: '16px'
-          }}>
-            <button 
-              className="btn btn-outline"
-              onClick={handleRetake}
-              style={{ flex: 1 }}
-            >
-              <RotateCcw size={18} />
-              Retake
-            </button>
-            
-            <button 
-              className="btn btn-primary"
-              onClick={handleSubmit}
-              style={{ flex: 2 }}
-            >
-              <CheckCircle size={18} />
-              Use This Video
-            </button>
-          </div>
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+          <button 
+            className="btn btn-outline"
+            onClick={handleRetake}
+            style={{ flex: 1 }}
+          >
+            <RotateCcw size={18} />
+            Retake
+          </button>
+          
+          <button 
+            className="btn btn-primary"
+            onClick={handleSubmit}
+            style={{ flex: 2 }}
+          >
+            <CheckCircle size={18} />
+            Use This Video
+          </button>
         </div>
       )}
     </div>
