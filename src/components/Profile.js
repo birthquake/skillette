@@ -15,7 +15,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { getUserSkills, getRecentActivity, deleteSkill, trackEvent } from '../firebase';
-import { usePullToRefresh } from './usePullToRefresh';
+import usePullToRefresh from './usePullToRefresh';
 import PullToRefreshIndicator from './PullToRefreshIndicator';
 import { SkillCardSkeleton, ActivityRowSkeleton } from './Skeleton';
 import ErrorBanner from './ErrorBanner';
