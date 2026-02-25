@@ -11,7 +11,7 @@ import {
   Video,
   Upload,
   X,
-  Play
+  Play,
   Pencil
 } from 'lucide-react';
 import { createSkill, updateSkill, uploadVideo, trackEvent } from '../firebase';
