@@ -11,7 +11,7 @@ import {
   Clock,
   ChevronRight,
   Medal,
-  Zap
+  Zap,
   Trash2
 } from 'lucide-react';
 import { getUserSkills, getRecentActivity, deleteSkill, trackEvent } from '../firebase';
