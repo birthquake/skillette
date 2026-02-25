@@ -10,12 +10,12 @@ function useInAppToast() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  return { toast, showToast };
+  return { toast, setToast, showToast };
 }
 
 export function usePushNotifications(userId) {
   const [pushEnabled, setPushEnabled] = useState(false);
-  const { toast, showToast } = useInAppToast();
+  const { toast, setToast } = useInAppToast();
 
   // Register service worker and request permission once user is logged in
   useEffect(() => {
@@ -48,9 +48,10 @@ export function usePushNotifications(userId) {
   useEffect(() => {
     const unsubscribe = onForegroundMessage((payload) => {
       const { title, body } = payload.notification || {};
-      if (title) showToast(title, body);
+      if (title) setToast({ title, body });
     });
     return unsubscribe;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return { pushEnabled, toast };
