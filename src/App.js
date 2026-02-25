@@ -56,7 +56,7 @@ function AppContent() {
   const { toast: pushToast } = usePushNotifications(currentUser?.uid);
 
   // Theme
-  const { theme, toggleTheme, isDark } = useTheme(); // { challenge, matchId }
+  const { toggleTheme, isDark } = useTheme(); // { challenge, matchId }
   const [appLoaded, setAppLoaded] = useState(false);
   const [challengeLoading, setChallengeLoading] = useState(false);
 
