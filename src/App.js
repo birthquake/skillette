@@ -17,6 +17,7 @@ import NotificationsScreen from './components/Notifications';
 import Onboarding from './components/Onboarding';
 import AdminScreen from './components/AdminScreen';
 import SkillDeepLink from './components/SkillDeepLink';
+import RatingModal from './components/RatingModal';
 import UserProfileScreen from './components/UserProfileScreen';
 
 // Main App Component (inside AuthProvider)
@@ -40,6 +41,7 @@ function AppContent() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [viewingUserId, setViewingUserId] = useState(null);
   const [deepLinkSkillId, setDeepLinkSkillId] = useState(null);
+  const [pendingRating, setPendingRating] = useState(null); // { challenge, matchId }
   const [appLoaded, setAppLoaded] = useState(false);
   const [challengeLoading, setChallengeLoading] = useState(false);
 
@@ -239,11 +241,17 @@ function AppContent() {
     } catch (error) {
       console.error('Error completing challenge:', error);
     } finally {
+      // Show rating modal before clearing state
+      setPendingRating({ challenge: currentChallenge, matchId: currentMatchId });
       setCurrentChallenge(null);
       setCurrentChallengeId(null);
       setCurrentMatchId(null);
       setCurrentScreen('home');
     }
+  };
+
+  const handleRatingDone = () => {
+    setPendingRating(null);
   };
 
   // Show loading screen while Firebase initializes
@@ -458,6 +466,14 @@ function AppContent() {
           </button>
         </div>
       </nav>
+      {pendingRating && (
+        <RatingModal
+          challenge={pendingRating.challenge}
+          matchId={pendingRating.matchId}
+          onDone={handleRatingDone}
+        />
+      )}
+
       {deepLinkSkillId && (
         <SkillDeepLink
           skillId={deepLinkSkillId}
