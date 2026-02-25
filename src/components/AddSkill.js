@@ -12,8 +12,9 @@ import {
   Upload,
   X,
   Play
+  Pencil
 } from 'lucide-react';
-import { createSkill, uploadVideo, trackEvent } from '../firebase';
+import { createSkill, updateSkill, uploadVideo, trackEvent } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import VideoRecorder from './VideoRecorder';
 
@@ -37,18 +38,20 @@ const THUMBNAILS = [
   '🎸', '🎯', '🍕', '🌱', '📚', '🎭', '🏆', '💫'
 ];
 
-function AddSkillScreen({ onNavigate, onSkillAdded }) {
+function AddSkillScreen({ onNavigate, onSkillAdded, skillToEdit }) {
   const { currentUser, incrementSkillsTaught } = useAuth();
   const fileInputRef = useRef(null);
 
+  const isEditMode = !!skillToEdit;
+
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    category: '',
-    difficulty: '',
-    duration: '',
-    thumbnail: '',
-    tips: ''
+    title:       skillToEdit?.title       || '',
+    description: skillToEdit?.description || '',
+    category:    skillToEdit?.category    || '',
+    difficulty:  skillToEdit?.difficulty  || '',
+    duration:    skillToEdit?.duration    || '',
+    thumbnail:   skillToEdit?.thumbnail   || '',
+    tips:        skillToEdit?.tips        || ''
   });
 
   const [formErrors, setFormErrors] = useState({});
@@ -160,16 +163,26 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
         tutorialVideoUrl
       };
 
-      const result = await createSkill(currentUser.uid, skillData);
-
-      if (result.success) {
-        await incrementSkillsTaught();
-        setSubmitSuccess(true);
-      trackEvent('skill_added', { category: formData.category, difficulty: formData.difficulty });
-      trackEvent('skill_added', { category: formData.category, difficulty: formData.difficulty });
-        if (onSkillAdded) onSkillAdded(result.skill);
+      let result;
+      if (isEditMode) {
+        result = await updateSkill(skillToEdit.id, skillData);
+        if (result.success) {
+          setSubmitSuccess(true);
+          trackEvent('skill_edited', { category: formData.category });
+          if (onSkillAdded) onSkillAdded({ ...skillToEdit, ...skillData });
+        } else {
+          setSubmitError('Something went wrong. Please try again.');
+        }
       } else {
-        setSubmitError('Something went wrong. Please try again.');
+        result = await createSkill(currentUser.uid, skillData);
+        if (result.success) {
+          await incrementSkillsTaught();
+          setSubmitSuccess(true);
+          trackEvent('skill_added', { category: formData.category, difficulty: formData.difficulty });
+          if (onSkillAdded) onSkillAdded(result.skill);
+        } else {
+          setSubmitError('Something went wrong. Please try again.');
+        }
       }
     } catch (error) {
       setSubmitError('Something went wrong. Please try again.');
