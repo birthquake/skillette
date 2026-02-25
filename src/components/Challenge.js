@@ -14,7 +14,7 @@ import {
   Flag
 } from 'lucide-react';
 import VideoRecorder from './VideoRecorder';
-import { uploadVideo, getMatchByChallenge, getUserData, trackEvent } from '../firebase';
+import { uploadVideo, getMatchByChallenge, getUserData, createNotification, sendPushNotification, trackEvent } from '../firebase';
 import ReportModal from './ReportModal';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -28,6 +28,8 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [matchedUser, setMatchedUser] = useState(null);
+  const [matchId, setMatchId] = useState(null);
+  const [teacherId, setTeacherId] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState('');
   const [showAbandonConfirm, setShowAbandonConfirm] = useState(false);
@@ -72,6 +74,8 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
       try {
         const match = await getMatchByChallenge(challenge.id);
         if (match) {
+          setMatchId(match.id);
+          setTeacherId(match.teacherId);
           const teacherData = await getUserData(match.teacherId);
           if (teacherData) {
             setMatchedUser({
@@ -143,6 +147,26 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
       if (result.success) {
         setChallengeStatus('completed');
         trackEvent('challenge_completed', { skillTitle: challenge?.skill?.learnSkill?.title });
+
+        // Notify the teacher that the learner has submitted proof
+        if (teacherId) {
+          const learnerName = currentUser.displayName || 'Your learner';
+          const skillTitle = challenge?.skill?.learnSkill?.title || 'a skill';
+          await createNotification(teacherId, {
+            type: 'proof_submitted',
+            title: 'Proof video submitted! 🎥',
+            body: `${learnerName} completed "${skillTitle}" — check it out!`,
+            learnerId: currentUser.uid,
+            learnerName,
+            skillTitle,
+          });
+          await sendPushNotification(teacherId, {
+            title: 'Proof video submitted! 🎥',
+            body: `${learnerName} completed "${skillTitle}"`,
+            data: { type: 'proof_submitted' }
+          });
+        }
+
         setTimeout(() => {
           // Pass the proof URL through so App.js can save it to the challenge doc
           onComplete(result.url);
