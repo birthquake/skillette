@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, RotateCcw, Clock, User, Flame, Loader, Bell } from 'lucide-react';
+import { Home, RotateCcw, Clock, User, Flame, Loader, Bell, Search } from 'lucide-react';
 import './App.css';
 
 // Import Firebase context and functions
