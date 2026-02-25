@@ -8,7 +8,7 @@ import {
   TrendingUp,
   Zap,
   Medal,
-  Grid3x3
+  LayoutGrid
 } from 'lucide-react';
 import { getRandomSkills, getRecentActivity, getLeaderboard, trackEvent } from '../firebase';
 import usePullToRefresh from './usePullToRefresh';
@@ -172,7 +172,7 @@ function HomeScreen({ user, userProfile, onNavigate, onViewSkill, onViewProfile 
               onClick={() => onNavigate('categories')}
               style={{ flex: '1', minWidth: '140px' }}
             >
-              <Grid3x3 size={18} />
+              <LayoutGrid size={18} />
               Browse
             </button>
           </div>
