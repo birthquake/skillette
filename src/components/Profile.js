@@ -10,6 +10,9 @@ import {
   Plus,
   Clock,
   ChevronRight,
+  History,
+  Sun,
+  Moon,
   Medal,
   Zap,
   Trash2,
@@ -22,7 +25,7 @@ import { SkillCardSkeleton, ActivityRowSkeleton } from './Skeleton';
 import ErrorBanner from './ErrorBanner';
 import { useAuth } from '../contexts/AuthContext';
 
-function ProfileScreen({ user, userProfile, onNavigate, onEditSkill }) {
+function ProfileScreen({ user, userProfile, onNavigate, onEditSkill, isDark, onToggleTheme }) {
   const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [userSkills, setUserSkills] = useState([]);
@@ -34,6 +37,8 @@ function ProfileScreen({ user, userProfile, onNavigate, onEditSkill }) {
   const [skillsError, setSkillsError] = useState('');
   const [deletingSkillId, setDeletingSkillId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = React.useRef(null);
   const [activityError, setActivityError] = useState('');
   const [retryCount, setRetryCount] = useState(0);
 
@@ -137,20 +142,40 @@ function ProfileScreen({ user, userProfile, onNavigate, onEditSkill }) {
     <div style={{ paddingTop: '20px', paddingBottom: '20px' }}>
       {/* Profile Header */}
       <div className="card" style={{ textAlign: 'center' }}>
-        <div style={{
-          width: '80px',
-          height: '80px',
-          background: 'linear-gradient(135deg, #7c6af7 0%, #9c59f5 100%)',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '32px',
-          color: 'white',
-          margin: '0 auto 16px',
-          boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)'
-        }}>
-          {user.avatar}
+        <div style={{ position: 'relative', width: '80px', margin: '0 auto 16px' }}>
+          <div
+            onClick={() => avatarInputRef.current?.click()}
+            style={{
+              width: '80px', height: '80px',
+              background: 'linear-gradient(135deg, #7c6af7 0%, #9c59f5 100%)',
+              borderRadius: '50%', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', fontSize: '32px', color: 'white',
+              boxShadow: '0 8px 32px rgba(102,126,234,0.3)',
+              cursor: 'pointer', overflow: 'hidden',
+              opacity: uploadingAvatar ? 0.6 : 1, transition: 'opacity 0.2s'
+            }}
+          >
+            {userProfile?.avatarUrl
+              ? <img src={userProfile.avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : user.avatar
+            }
+          </div>
+          {/* Edit badge */}
+          <div style={{
+            position: 'absolute', bottom: 0, right: 0,
+            width: '24px', height: '24px', borderRadius: '50%',
+            background: '#7c6af7', border: '2px solid #0f1117',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', pointerEvents: 'none'
+          }}>
+            <Camera size={11} color="white" />
+          </div>
+          <input
+            ref={avatarInputRef}
+            type="file" accept="image/*"
+            onChange={handleAvatarChange}
+            style={{ display: 'none' }}
+          />
         </div>
         
         <h1 style={{ 
@@ -313,6 +338,31 @@ function ProfileScreen({ user, userProfile, onNavigate, onEditSkill }) {
             <ChevronRight size={18} />
           </button>
 
+          <button
+            className="btn btn-outline"
+            onClick={() => onNavigate('history')}
+            style={{ justifyContent: 'space-between', textAlign: 'left' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <History size={18} />
+              <span>Challenge History</span>
+            </div>
+            <ChevronRight size={18} />
+          </button>
+
+          {/* Theme toggle */}
+          <button
+            className="btn btn-outline"
+            onClick={onToggleTheme}
+            style={{ justifyContent: 'space-between', textAlign: 'left' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+              <span>{isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
+            </div>
+            <ChevronRight size={18} />
+          </button>
+
           {/* Admin link — only visible in dev or for admin UIDs */}
           {process.env.NODE_ENV === 'development' && (
             <button 
@@ -331,6 +381,24 @@ function ProfileScreen({ user, userProfile, onNavigate, onEditSkill }) {
       </div>
     </div>
   );
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !user?.uid) return;
+    setUploadingAvatar(true);
+    try {
+      const result = await uploadAvatar(user.uid, file);
+      if (result.success) {
+        trackEvent('avatar_uploaded');
+        // Force a page reload so AuthContext picks up new avatarUrl
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error('Avatar upload failed:', err);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const handleDeleteSkill = async (skillId) => {
     setDeletingSkillId(skillId);
