@@ -59,25 +59,27 @@ function HomeScreen({ user, onNavigate }) {
     loadActivity();
   }, [currentUser, retryCount]);
 
-  // Fetch real trending skills from Firebase
+  // Fetch featured skills and leaderboard
   useEffect(() => {
-    const loadFeaturedSkills = async () => {
+    const load = async () => {
+      if (!currentUser) return;
       setSkillsLoading(true);
       setSkillsError('');
       try {
-        const skills = await getRandomSkills(currentUser?.uid, 3);
-        setFeaturedSkills(hackSkills);
+        const [skills, board] = await Promise.all([
+          getRandomSkills(currentUser.uid, 3),
+          getLeaderboard(5),
+        ]);
+        setFeaturedSkills(skills);
+        setLeaderboard(board);
       } catch (error) {
-        console.error('Error loading featured skills:', error);
+        console.error('Error loading skills:', error);
         setSkillsError('Could not load featured skills.');
       } finally {
         setSkillsLoading(false);
       }
     };
-
-    if (currentUser) {
-      loadFeaturedSkills();
-    }
+    load();
   }, [currentUser, retryCount]);
 
   // Quick stats for the user
