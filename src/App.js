@@ -18,6 +18,9 @@ import Onboarding from './components/Onboarding';
 import AdminScreen from './components/AdminScreen';
 import SkillDeepLink from './components/SkillDeepLink';
 import SkillSearchScreen from './components/SkillSearchScreen';
+import SkillDetailScreen from './components/SkillDetailScreen';
+import { usePushNotifications } from './components/usePushNotifications';
+import PushToast from './components/PushToast';
 import RatingModal from './components/RatingModal';
 import UserProfileScreen from './components/UserProfileScreen';
 
@@ -43,7 +46,11 @@ function AppContent() {
   const [viewingUserId, setViewingUserId] = useState(null);
   const [deepLinkSkillId, setDeepLinkSkillId] = useState(null);
   const [pendingRating, setPendingRating] = useState(null);
-  const [editingSkill, setEditingSkill] = useState(null); // { challenge, matchId }
+  const [editingSkill, setEditingSkill] = useState(null);
+  const [viewingSkillId, setViewingSkillId] = useState(null);
+
+  // Push notifications
+  const { toast: pushToast } = usePushNotifications(currentUser?.uid); // { challenge, matchId }
   const [appLoaded, setAppLoaded] = useState(false);
   const [challengeLoading, setChallengeLoading] = useState(false);
 
@@ -311,6 +318,7 @@ function AppContent() {
           <RouletteScreen 
             onStartChallenge={startChallenge}
             onNavigate={navigateToScreen}
+          onViewSkill={(skillId) => { setViewingSkillId(skillId); navigateToScreen('skillDetail'); }}
           />
         );
       case 'challenge':
@@ -333,7 +341,21 @@ function AppContent() {
           />
         );
       case 'search':
-      return <SkillSearchScreen onNavigate={navigateToScreen} />;
+      return (
+        <SkillSearchScreen
+          onNavigate={navigateToScreen}
+          onViewSkill={(skillId) => { setViewingSkillId(skillId); navigateToScreen('skillDetail'); }}
+        />
+      );
+    case 'skillDetail':
+      return (
+        <SkillDetailScreen
+          skillId={viewingSkillId}
+          onBack={() => { setViewingSkillId(null); navigateToScreen('home'); }}
+          onViewProfile={(uid) => { setViewingUserId(uid); navigateToScreen('userProfile'); }}
+          onSpin={() => navigateToScreen('roulette')}
+        />
+      );
     case 'admin':
       return <AdminScreen onNavigate={navigateToScreen} />;
     case 'userProfile':
@@ -478,6 +500,8 @@ function AppContent() {
           </button>
         </div>
       </nav>
+      <PushToast toast={pushToast} />
+
       {pendingRating && (
         <RatingModal
           challenge={pendingRating.challenge}
