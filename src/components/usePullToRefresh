@@ -50,3 +50,5 @@ export function usePullToRefresh(onRefresh, threshold = 72) {
     handlers: { onTouchStart, onTouchMove, onTouchEnd }
   };
 }
+
+export default usePullToRefresh;
