@@ -47,6 +47,57 @@
   --spacing-xl: 32px;
 }
 
+
+/* Light mode overrides */
+[data-theme="light"] {
+  --bg-base: #f4f4f8;
+  --bg-card: #ffffff;
+  --bg-card-elevated: #f0f0f6;
+  --bg-input: #e8e8f0;
+
+  --text-primary: #1a1a2e;
+  --text-secondary: #555578;
+  --text-muted: #9090aa;
+
+  --border-light: rgba(0, 0, 0, 0.08);
+  --border-medium: rgba(0, 0, 0, 0.14);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15);
+
+  --background-white: #ffffff;
+  --background-light: #f0f0f6;
+  --background-card: #ffffff;
+}
+
+[data-theme="light"] html,
+[data-theme="light"] body,
+[data-theme="light"] .App {
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .card {
+  background: var(--bg-card);
+  border-color: var(--border-light);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+[data-theme="light"] nav {
+  background: rgba(244,244,248,0.92) !important;
+  border-color: rgba(0,0,0,0.08) !important;
+}
+
+[data-theme="light"] input,
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-medium) !important;
+}
+
 /* Reset and Base Styles */
 * {
   margin: 0;
