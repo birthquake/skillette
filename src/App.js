@@ -122,6 +122,13 @@ function AppContent() {
     if (skillId) setDeepLinkSkillId(skillId);
   }, []);
 
+  // Handle deep links — read ?skill= param on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const skillId = params.get('skill');
+    if (skillId) setDeepLinkSkillId(skillId);
+  }, []);
+
   // Navigation handler
   const navigateToScreen = (screen) => {
     setCurrentScreen(screen);
@@ -451,6 +458,13 @@ function AppContent() {
           </button>
         </div>
       </nav>
+      {deepLinkSkillId && (
+        <SkillDeepLink
+          skillId={deepLinkSkillId}
+          onDismiss={() => setDeepLinkSkillId(null)}
+          onSpin={() => navigateToScreen('roulette')}
+        />
+      )}
     </div>
   );
 }
