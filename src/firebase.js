@@ -590,6 +590,28 @@ export const deleteSkill = async (skillId) => {
     return { success: false };
   }
 };
+
+// Upload a profile photo and update the user's avatar URL
+export const uploadAvatar = async (userId, imageBlob) => {
+  try {
+    const storageRef = ref(storage, `avatars/${userId}/avatar.jpg`);
+    const uploadTask = uploadBytesResumable(storageRef, imageBlob);
+    return new Promise((resolve, reject) => {
+      uploadTask.on('state_changed', null,
+        (error) => reject(error),
+        async () => {
+          const url = await getDownloadURL(uploadTask.snapshot.ref);
+          await updateDoc(doc(db, 'users', userId), { avatarUrl: url });
+          resolve({ success: true, url });
+        }
+      );
+    });
+  } catch (error) {
+    console.error('Error uploading avatar:', error);
+    return { success: false };
+  }
+};
+
 // Update an existing skill
 export const updateSkill = async (skillId, updates) => {
   try {
