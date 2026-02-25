@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   RotateCcw, Zap, ArrowRight, RefreshCw, Flag, Share2
 } from 'lucide-react';
-import { getRandomSkills, getUserSkills, createMatch, createChallenge, createNotification, trackEvent } from '../firebase';
+import { getRandomSkills, getUserSkills, createMatch, createChallenge, createNotification, sendPushNotification, trackEvent } from '../firebase';
 import ReportModal from './ReportModal';
 import ErrorBanner from './ErrorBanner';
 import { SkillCardSkeleton } from './Skeleton';
@@ -214,6 +214,13 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
           learnerId: currentUser.uid,
           skillTitle: matchedSkill.title,
           skillThumbnail: matchedSkill.thumbnail || '🎯',
+        });
+
+        // Also send a real push notification to the teacher's device
+        await sendPushNotification(matchedSkill.userId, {
+          title: 'Someone is learning your skill! 🎉',
+          body: `${currentUser.displayName || 'Someone'} picked "${matchedSkill.title}"`,
+          data: { type: 'new_learner', skillId: matchedSkill.id }
         });
       }
       setTimeout(() => onStartChallenge({ learnSkill: matchedSkill, teachSkill: yourSkill }, result.id), 1000);
