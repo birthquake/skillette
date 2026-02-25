@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Medal,
   Zap,
-  Trash2
+  Trash2,
+  Pencil
 } from 'lucide-react';
 import { getUserSkills, getRecentActivity, deleteSkill, trackEvent } from '../firebase';
 import usePullToRefresh from './usePullToRefresh';
@@ -21,7 +22,7 @@ import { SkillCardSkeleton, ActivityRowSkeleton } from './Skeleton';
 import ErrorBanner from './ErrorBanner';
 import { useAuth } from '../contexts/AuthContext';
 
-function ProfileScreen({ user, userProfile, onNavigate }) {
+function ProfileScreen({ user, userProfile, onNavigate, onEditSkill }) {
   const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [userSkills, setUserSkills] = useState([]);
@@ -408,18 +409,24 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
                 {skill.difficulty}
               </span>
             </div>
-            <button
-              onClick={() => setConfirmDeleteId(skill.id)}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                color: '#555870', padding: '8px', borderRadius: '8px',
-                transition: 'all 0.15s ease'
-              }}
-              onMouseOver={e => e.currentTarget.style.color = '#f5576c'}
-              onMouseOut={e => e.currentTarget.style.color = '#555870'}
-            >
-              <Trash2 size={16} />
-            </button>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <button
+                onClick={() => onEditSkill && onEditSkill(skill)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#555870', padding: '8px', borderRadius: '8px', transition: 'all 0.15s ease' }}
+                onMouseOver={e => e.currentTarget.style.color = '#7c6af7'}
+                onMouseOut={e => e.currentTarget.style.color = '#555870'}
+              >
+                <Pencil size={15} />
+              </button>
+              <button
+                onClick={() => setConfirmDeleteId(skill.id)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#555870', padding: '8px', borderRadius: '8px', transition: 'all 0.15s ease' }}
+                onMouseOver={e => e.currentTarget.style.color = '#f5576c'}
+                onMouseOut={e => e.currentTarget.style.color = '#555870'}
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
           </div>
 
           {/* Confirm delete */}
