@@ -9,7 +9,7 @@ import {
   Loader,
   Flag
 } from 'lucide-react';
-import { getRandomSkills, getUserSkills, createMatch, createChallenge, createNotification } from '../firebase';
+import { getRandomSkills, getUserSkills, createMatch, createChallenge, createNotification, trackEvent } from '../firebase';
 import ReportModal from './ReportModal';
 import ErrorBanner from './ErrorBanner';
 import { useAuth } from '../contexts/AuthContext';
@@ -79,6 +79,7 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
     setLoadError('');
     setIsSpinning(true);
     setSpinStage('spinning');
+    trackEvent('roulette_spin');
 
     const randomRotation = wheelRotation + 1440 + Math.random() * 360;
     setWheelRotation(randomRotation);
@@ -96,6 +97,7 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
 
   const confirmMatch = async () => {
     setSpinStage('confirmed');
+    trackEvent('challenge_started', { skillTitle: matchedSkill?.title });
 
     try {
       // Create the challenge document first
@@ -333,14 +335,14 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
   if (spinStage === 'matched') {
     return (
       <div className="fade-in" style={{ paddingTop: '20px', paddingBottom: '20px' }}>
-        <div className="card" style={{ textAlign: 'center' }}>
+        <div className="card bounce-in" style={{ textAlign: 'center' }}>
           <h1 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '8px', color: '#4facfe' }}>
             🎉 Perfect Match!
           </h1>
 
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="stagger-children" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
           {/* Skill to Learn */}
           <div className="card">
@@ -467,7 +469,7 @@ function RouletteScreen({ onStartChallenge, onNavigate }) {
   if (spinStage === 'confirmed') {
     return (
       <div className="fade-in" style={{ paddingTop: '60px', paddingBottom: '20px', textAlign: 'center' }}>
-        <div style={{ fontSize: '64px', marginBottom: '20px', animation: 'spin 1s ease-in-out' }}>
+        <div className="float" style={{ fontSize: '64px', marginBottom: '20px' }}>
           🚀
         </div>
         <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '12px', color: 'white' }}>
