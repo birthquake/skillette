@@ -319,6 +319,7 @@ function AppContent() {
             onStartChallenge={startChallenge}
             onNavigate={navigateToScreen}
           onViewSkill={(skillId) => { setViewingSkillId(skillId); navigateToScreen('skillDetail'); }}
+          onViewProfile={(uid) => { setViewingUserId(uid); navigateToScreen('userProfile'); }}
           />
         );
       case 'challenge':
