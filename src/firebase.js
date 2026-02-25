@@ -606,6 +606,21 @@ export const createReport = async (reportData) => {
   }
 };
 
+
+// Get a single skill by ID (for deep links)
+export const getSkillById = async (skillId) => {
+  try {
+    const skillRef = doc(db, 'skills', skillId);
+    const skillDoc = await getDoc(skillRef);
+    if (skillDoc.exists()) {
+      return { id: skillDoc.id, ...skillDoc.data() };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting skill:', error);
+    return null;
+  }
+};
 // Admin functions
 export const getAdminData = async () => {
   try {
