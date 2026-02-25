@@ -9,7 +9,7 @@ import {
   Zap
 } from 'lucide-react';
 import { getRandomSkills, getRecentActivity, trackEvent } from '../firebase';
-import { usePullToRefresh } from './usePullToRefresh';
+import usePullToRefresh from './usePullToRefresh';
 import PullToRefreshIndicator from './PullToRefreshIndicator';
 import { SkillCardSkeleton } from './Skeleton';
 import ErrorBanner from './ErrorBanner';
