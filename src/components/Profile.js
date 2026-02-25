@@ -395,6 +395,11 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
                 <span>{skill.category}</span>
                 <span>•</span>
                 <span>{skill.timesShared} swaps</span>
+                {skill.rating > 0 && <>
+                  <span>•</span>
+                  <span style={{ color: '#ffd700' }}>★ {skill.rating.toFixed(1)}</span>
+                  <span style={{ color: '#555870', fontSize: '11px' }}>({skill.ratingCount || 0})</span>
+                </>}
               </div>
               <span style={{
                 background: getDifficultyColor(skill.difficulty), color: 'white',
