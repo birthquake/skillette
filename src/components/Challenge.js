@@ -14,7 +14,7 @@ import {
   Flag
 } from 'lucide-react';
 import VideoRecorder from './VideoRecorder';
-import { uploadVideo, getMatchByChallenge, getUserData } from '../firebase';
+import { uploadVideo, getMatchByChallenge, getUserData, trackEvent } from '../firebase';
 import ReportModal from './ReportModal';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -142,6 +142,7 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
 
       if (result.success) {
         setChallengeStatus('completed');
+        trackEvent('challenge_completed', { skillTitle: challenge?.skill?.learnSkill?.title });
         setTimeout(() => {
           // Pass the proof URL through so App.js can save it to the challenge doc
           onComplete(result.url);
