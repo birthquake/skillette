@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, X, SlidersHorizontal } from 'lucide-react';
 import { getRandomSkills, trackEvent } from '../firebase';
 import { SkillCardSkeleton } from './Skeleton';
