@@ -16,6 +16,7 @@ import AddSkillScreen from './components/AddSkill';
 import NotificationsScreen from './components/Notifications';
 import Onboarding from './components/Onboarding';
 import AdminScreen from './components/AdminScreen';
+import SkillDeepLink from './components/SkillDeepLink';
 import UserProfileScreen from './components/UserProfileScreen';
 
 // Main App Component (inside AuthProvider)
@@ -38,6 +39,7 @@ function AppContent() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [viewingUserId, setViewingUserId] = useState(null);
+  const [deepLinkSkillId, setDeepLinkSkillId] = useState(null);
   const [appLoaded, setAppLoaded] = useState(false);
   const [challengeLoading, setChallengeLoading] = useState(false);
 
@@ -112,6 +114,13 @@ function AppContent() {
 
     restoreChallenge();
   }, [isAuthenticated, currentUser]);
+
+  // Handle deep links — read ?skill= param on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const skillId = params.get('skill');
+    if (skillId) setDeepLinkSkillId(skillId);
+  }, []);
 
   // Navigation handler
   const navigateToScreen = (screen) => {
