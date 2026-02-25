@@ -7,8 +7,9 @@ import {
   Trophy, 
   TrendingUp,
   Zap
+  Medal
 } from 'lucide-react';
-import { getRandomSkills, getRecentActivity, trackEvent } from '../firebase';
+import { getRandomSkills, getRecentActivity, getLeaderboard, trackEvent } from '../firebase';
 import usePullToRefresh from './usePullToRefresh';
 import PullToRefreshIndicator from './PullToRefreshIndicator';
 import { SkillCardSkeleton } from './Skeleton';
@@ -26,6 +27,7 @@ function HomeScreen({ user, onNavigate }) {
   const [activityError, setActivityError] = useState('');
   const [skillsError, setSkillsError] = useState('');
   const [retryCount, setRetryCount] = useState(0);
+  const [leaderboard, setLeaderboard] = useState([]);
 
   const handleRefresh = useCallback(async () => {
     setRetryCount(c => c + 1);
@@ -64,7 +66,7 @@ function HomeScreen({ user, onNavigate }) {
       setSkillsError('');
       try {
         const skills = await getRandomSkills(currentUser?.uid, 3);
-        setFeaturedSkills(skills);
+        setFeaturedSkills(hackSkills);
       } catch (error) {
         console.error('Error loading featured skills:', error);
         setSkillsError('Could not load featured skills.');
@@ -404,6 +406,37 @@ function HomeScreen({ user, onNavigate }) {
           </button>
         </div>
       </div>
+
+      {/* Leaderboard */}
+      {leaderboard.length > 0 && (
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">🏆 Top Teachers</h2>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {leaderboard.map((teacher, i) => (
+              <div key={teacher.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', background: i === 0 ? 'rgba(255,215,0,0.08)' : '#252838', borderRadius: '10px', border: i === 0 ? '1px solid rgba(255,215,0,0.2)' : '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ width: '28px', textAlign: 'center', fontSize: i < 3 ? '18px' : '13px', fontWeight: '700', color: i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#555870', flexShrink: 0 }}>
+                  {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
+                </div>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #7c6af7, #9c59f5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>
+                  {teacher.avatar || '👤'}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: '14px', fontWeight: '600', color: '#f0f0f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {teacher.name || 'Anonymous'}
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#555870' }}>
+                    {teacher.skillsTaught || 0} swaps
+                    {teacher.teacherRating > 0 && <span style={{ marginLeft: '6px', color: '#ffd700' }}>★ {teacher.teacherRating.toFixed(1)}</span>}
+                  </p>
+                </div>
+                <Medal size={14} style={{ color: '#555870', flexShrink: 0 }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
     </div>
   );
