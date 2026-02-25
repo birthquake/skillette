@@ -237,7 +237,7 @@ function HomeScreen({ user, onNavigate }) {
                     cursor: 'pointer',
                     transition: 'all 0.2s ease'
                   }}
-                  onClick={() => onNavigate('roulette')}
+                  onClick={() => onViewSkill ? onViewSkill(skill.id) : onNavigate('roulette')}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-2px)';
                     e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
