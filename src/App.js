@@ -17,6 +17,7 @@ import NotificationsScreen from './components/Notifications';
 import Onboarding from './components/Onboarding';
 import AdminScreen from './components/AdminScreen';
 import SkillDeepLink from './components/SkillDeepLink';
+import SkillSearchScreen from './components/SkillSearchScreen';
 import RatingModal from './components/RatingModal';
 import UserProfileScreen from './components/UserProfileScreen';
 
@@ -41,7 +42,8 @@ function AppContent() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [viewingUserId, setViewingUserId] = useState(null);
   const [deepLinkSkillId, setDeepLinkSkillId] = useState(null);
-  const [pendingRating, setPendingRating] = useState(null); // { challenge, matchId }
+  const [pendingRating, setPendingRating] = useState(null);
+  const [editingSkill, setEditingSkill] = useState(null); // { challenge, matchId }
   const [appLoaded, setAppLoaded] = useState(false);
   const [challengeLoading, setChallengeLoading] = useState(false);
 
@@ -301,6 +303,7 @@ function AppContent() {
           <HomeScreen 
             user={user}
             onNavigate={navigateToScreen}
+            onEditSkill={(skill) => { setEditingSkill(skill); navigateToScreen('addSkill'); }}
           />
         );
       case 'roulette':
@@ -329,7 +332,9 @@ function AppContent() {
             onNavigate={navigateToScreen}
           />
         );
-      case 'admin':
+      case 'search':
+      return <SkillSearchScreen onNavigate={navigateToScreen} />;
+    case 'admin':
       return <AdminScreen onNavigate={navigateToScreen} />;
     case 'userProfile':
       return (
@@ -351,7 +356,8 @@ function AppContent() {
         return (
           <AddSkillScreen
             onNavigate={navigateToScreen}
-            onSkillAdded={() => navigateToScreen('profile')}
+            skillToEdit={editingSkill}
+            onSkillAdded={() => { setEditingSkill(null); navigateToScreen('profile'); }}
           />
         );
       default:
@@ -382,7 +388,13 @@ function AppContent() {
         <div className="nav-logo">
           Skillette
         </div>
-        <div className="nav-profile">
+        <div className="nav-profile" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            onClick={() => navigateToScreen('search')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8b8fa8', padding: '4px', display: 'flex', alignItems: 'center' }}
+          >
+            <Search size={20} />
+          </button>
           <div className="streak-indicator">
             <Flame size={12} />
             {user.streak}
