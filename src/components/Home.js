@@ -16,7 +16,7 @@ import { SkillCardSkeleton } from './Skeleton';
 import ErrorBanner from './ErrorBanner';
 import { useAuth } from '../contexts/AuthContext';
 
-function HomeScreen({ user, userProfile, onNavigate, onViewSkill }) {
+function HomeScreen({ user, userProfile, onNavigate, onViewSkill, onViewProfile }) {
   const { currentUser } = useAuth();
 
   const [greeting, setGreeting] = useState('');
@@ -417,7 +417,7 @@ function HomeScreen({ user, userProfile, onNavigate, onViewSkill }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {leaderboard.map((teacher, i) => (
-              <div key={teacher.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', background: i === 0 ? 'rgba(255,215,0,0.08)' : '#252838', borderRadius: '10px', border: i === 0 ? '1px solid rgba(255,215,0,0.2)' : '1px solid rgba(255,255,255,0.05)' }}>
+              <div key={teacher.id} onClick={() => onViewProfile && onViewProfile(teacher.id)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', background: i === 0 ? 'rgba(255,215,0,0.08)' : '#252838', borderRadius: '10px', border: i === 0 ? '1px solid rgba(255,215,0,0.2)' : '1px solid rgba(255,255,255,0.05)', cursor: 'pointer' }}>
                 <div style={{ width: '28px', textAlign: 'center', fontSize: i < 3 ? '18px' : '13px', fontWeight: '700', color: i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#555870', flexShrink: 0 }}>
                   {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
                 </div>
