@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   User, 
   Camera, 
@@ -12,8 +12,11 @@ import {
   ChevronRight,
   Medal,
   Zap
+  Trash2
 } from 'lucide-react';
-import { getUserSkills, getRecentActivity } from '../firebase';
+import { getUserSkills, getRecentActivity, deleteSkill, trackEvent } from '../firebase';
+import { usePullToRefresh } from './usePullToRefresh';
+import PullToRefreshIndicator from './PullToRefreshIndicator';
 import { SkillCardSkeleton, ActivityRowSkeleton } from './Skeleton';
 import ErrorBanner from './ErrorBanner';
 import { useAuth } from '../contexts/AuthContext';
@@ -28,8 +31,17 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
   const [skillsLoading, setSkillsLoading] = useState(true);
   const [activityLoading, setActivityLoading] = useState(true);
   const [skillsError, setSkillsError] = useState('');
+  const [deletingSkillId, setDeletingSkillId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [activityError, setActivityError] = useState('');
   const [retryCount, setRetryCount] = useState(0);
+
+  const handleRefresh = useCallback(async () => {
+    setRetryCount(c => c + 1);
+    trackEvent('pull_to_refresh', { screen: 'profile' });
+  }, []);
+
+  const { isRefreshing, pullDistance, handlers } = usePullToRefresh(handleRefresh);
 
   // Load real skills from Firebase
   useEffect(() => {
@@ -319,6 +331,17 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
     </div>
   );
 
+  const handleDeleteSkill = async (skillId) => {
+    setDeletingSkillId(skillId);
+    const result = await deleteSkill(skillId);
+    if (result.success) {
+      setUserSkills(prev => prev.filter(s => s.id !== skillId));
+      trackEvent('skill_deleted');
+    }
+    setDeletingSkillId(null);
+    setConfirmDeleteId(null);
+  };
+
   const renderSkills = () => (
     <div style={{ paddingTop: '20px', paddingBottom: '20px' }}>
       <div style={{ 
@@ -355,65 +378,79 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
 
       {!skillsLoading && !skillsError && userSkills.map((skill) => (
         <div key={skill.id} className="card" style={{ marginBottom: '12px' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px'
-          }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              width: '50px',
-              height: '50px',
-              background: '#252838',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '20px',
+              width: '50px', height: '50px', background: '#252838',
+              borderRadius: '12px', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', fontSize: '20px',
               boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
             }}>
               {skill.thumbnail}
             </div>
-            
             <div style={{ flex: 1 }}>
-              <h3 style={{ 
-                fontSize: '16px', 
-                fontWeight: '600', 
-                marginBottom: '4px',
-                color: '#f0f0f5'
-              }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px', color: '#f0f0f5' }}>
                 {skill.title}
               </h3>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '8px',
-                fontSize: '14px',
-                color: '#8b8fa8',
-                marginBottom: '4px'
-              }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#8b8fa8', marginBottom: '4px' }}>
                 <span>{skill.category}</span>
                 <span>•</span>
                 <span>{skill.timesShared} swaps</span>
-                <span>•</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                  <Star size={12} style={{ color: '#ffeaa7' }} />
-                  <span>{skill.rating}</span>
-                </div>
               </div>
               <span style={{
-                background: getDifficultyColor(skill.difficulty),
-                color: 'white',
-                padding: '2px 6px',
-                borderRadius: '4px',
-                fontSize: '12px',
-                fontWeight: '500'
+                background: getDifficultyColor(skill.difficulty), color: 'white',
+                padding: '2px 6px', borderRadius: '4px', fontSize: '12px', fontWeight: '500'
               }}>
                 {skill.difficulty}
               </span>
             </div>
-            
-            <ChevronRight size={18} style={{ color: '#8b8fa8' }} />
+            <button
+              onClick={() => setConfirmDeleteId(skill.id)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: '#555870', padding: '8px', borderRadius: '8px',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseOver={e => e.currentTarget.style.color = '#f5576c'}
+              onMouseOut={e => e.currentTarget.style.color = '#555870'}
+            >
+              <Trash2 size={16} />
+            </button>
           </div>
+
+          {/* Confirm delete */}
+          {confirmDeleteId === skill.id && (
+            <div style={{
+              marginTop: '12px', padding: '12px', borderRadius: '10px',
+              background: 'rgba(245,87,108,0.1)', border: '1px solid rgba(245,87,108,0.3)'
+            }}>
+              <p style={{ fontSize: '13px', color: '#ff8097', marginBottom: '10px', fontWeight: '600' }}>
+                Remove "{skill.title}" from the pool?
+              </p>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => setConfirmDeleteId(null)}
+                  style={{
+                    flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)',
+                    background: '#252838', color: '#8b8fa8', fontSize: '13px', fontWeight: '600', cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteSkill(skill.id)}
+                  disabled={deletingSkillId === skill.id}
+                  style={{
+                    flex: 1, padding: '8px', borderRadius: '8px', border: 'none',
+                    background: 'linear-gradient(135deg, #f5576c 0%, #f093fb 100%)',
+                    color: 'white', fontSize: '13px', fontWeight: '600', cursor: 'pointer',
+                    opacity: deletingSkillId === skill.id ? 0.6 : 1
+                  }}
+                >
+                  {deletingSkillId === skill.id ? 'Removing...' : 'Remove'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -569,11 +606,12 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
   );
 
   return (
-    <div className="fade-in">
+    <div {...handlers} className="fade-in">
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
       {/* Tab Navigation */}
       <div style={{
         display: 'flex',
-        background: 'rgba(255, 255, 255, 0.1)',
+        background: 'rgba(255,255,255,0.05)',
         borderRadius: '12px',
         padding: '4px',
         margin: '20px 0',
@@ -596,7 +634,7 @@ function ProfileScreen({ user, userProfile, onNavigate }) {
               gap: '4px',
               padding: '12px 8px',
               background: activeTab === tab.id ? 'white' : 'transparent',
-              color: activeTab === tab.id ? '#1a1a1a' : 'rgba(255,255,255,0.8)',
+              color: activeTab === tab.id ? '#1a1a1a' : 'rgba(240,240,245,0.6)',
               border: 'none',
               borderRadius: '8px',
               cursor: 'pointer',
