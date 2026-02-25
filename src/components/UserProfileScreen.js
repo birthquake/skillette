@@ -155,6 +155,7 @@ function UserProfileScreen({ userId, onBack }) {
                     </span>
                     <span style={{ fontSize: '12px', color: '#8b8fa8' }}>
                       {skill.duration}
+                      {skill.rating > 0 && <span style={{ marginLeft: '6px', color: '#ffd700' }}>★ {skill.rating.toFixed(1)}</span>}
                     </span>
                   </div>
                 </div>
