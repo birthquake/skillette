@@ -19,7 +19,10 @@ import AdminScreen from './components/AdminScreen';
 import SkillDeepLink from './components/SkillDeepLink';
 import SkillSearchScreen from './components/SkillSearchScreen';
 import SkillDetailScreen from './components/SkillDetailScreen';
+import ChallengeHistoryScreen from './components/ChallengeHistoryScreen';
+import CategoriesScreen from './components/CategoriesScreen';
 import { usePushNotifications } from './components/usePushNotifications';
+import useTheme from './components/useTheme';
 import PushToast from './components/PushToast';
 import RatingModal from './components/RatingModal';
 import UserProfileScreen from './components/UserProfileScreen';
@@ -50,7 +53,10 @@ function AppContent() {
   const [viewingSkillId, setViewingSkillId] = useState(null);
 
   // Push notifications
-  const { toast: pushToast } = usePushNotifications(currentUser?.uid); // { challenge, matchId }
+  const { toast: pushToast } = usePushNotifications(currentUser?.uid);
+
+  // Theme
+  const { theme, toggleTheme, isDark } = useTheme(); // { challenge, matchId }
   const [appLoaded, setAppLoaded] = useState(false);
   const [challengeLoading, setChallengeLoading] = useState(false);
 
@@ -339,12 +345,24 @@ function AppContent() {
             user={user}
             userProfile={userProfile}
             onNavigate={navigateToScreen}
+            onEditSkill={(skill) => { setEditingSkill(skill); navigateToScreen('addSkill'); }}
+            isDark={isDark}
+            onToggleTheme={toggleTheme}
           />
         );
       case 'search':
       return (
         <SkillSearchScreen
           onNavigate={navigateToScreen}
+          onViewSkill={(skillId) => { setViewingSkillId(skillId); navigateToScreen('skillDetail'); }}
+        />
+      );
+    case 'history':
+      return <ChallengeHistoryScreen onBack={() => navigateToScreen('profile')} />;
+    case 'categories':
+      return (
+        <CategoriesScreen
+          onBack={() => navigateToScreen('home')}
           onViewSkill={(skillId) => { setViewingSkillId(skillId); navigateToScreen('skillDetail'); }}
         />
       );
