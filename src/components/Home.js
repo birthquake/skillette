@@ -16,7 +16,7 @@ import { SkillCardSkeleton } from './Skeleton';
 import ErrorBanner from './ErrorBanner';
 import { useAuth } from '../contexts/AuthContext';
 
-function HomeScreen({ user, onNavigate }) {
+function HomeScreen({ user, userProfile, onNavigate, onViewSkill }) {
   const { currentUser } = useAuth();
 
   const [greeting, setGreeting] = useState('');
