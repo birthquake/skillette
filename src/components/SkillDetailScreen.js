@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Star, Play, User, Clock, Zap, MessageSquare, Share2 } from 'lucide-react';
 import { getSkillById, getSkillRatings, trackEvent } from '../firebase';
 import { Skeleton } from './Skeleton';
-import { useAuth } from '../contexts/AuthContext';
 
 const getDifficultyColor = (d) =>
   ({ Easy: '#4ecdc4', Medium: '#f5a623', Hard: '#ff6b6b' }[d] || '#8b8fa8');
@@ -29,7 +28,6 @@ function StarDisplay({ rating, count, size = 14 }) {
 }
 
 function SkillDetailScreen({ skillId, onBack, onViewProfile, onSpin }) {
-  const { currentUser } = useAuth();
   const [skill, setSkill]     = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
