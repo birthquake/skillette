@@ -514,6 +514,18 @@ export const deleteSkill = async (skillId) => {
     return { success: false };
   }
 };
+// Update an existing skill
+export const updateSkill = async (skillId, updates) => {
+  try {
+    const skillRef = doc(db, 'skills', skillId);
+    await updateDoc(skillRef, { ...updates, updatedAt: new Date() });
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating skill:', error);
+    return { success: false };
+  }
+};
+
 // Notification functions
 export const createNotification = async (userId, notification) => {
   try {
@@ -690,6 +702,22 @@ export const getSkillRatings = async (skillId, limitNum = 10) => {
   }
 };
 
+
+// Leaderboard — top teachers by skillsTaught
+export const getLeaderboard = async (limitNum = 10) => {
+  try {
+    const q = query(
+      collection(db, 'users'),
+      orderBy('skillsTaught', 'desc'),
+      limit(limitNum)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (error) {
+    console.error('Error getting leaderboard:', error);
+    return [];
+  }
+};
 // Admin functions
 export const getAdminData = async () => {
   try {
