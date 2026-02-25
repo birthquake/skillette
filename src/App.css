@@ -237,26 +237,7 @@ html, body {
   text-align: center;
 }
 
-.roulette-wheel {
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  background: conic-gradient(
-    #ff6b6b 0deg 60deg,
-    #4ecdc4 60deg 120deg,
-    #45b7d1 120deg 180deg,
-    #96ceb4 180deg 240deg,
-    #ffeaa7 240deg 300deg,
-    #dda0dd 300deg 360deg
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  box-shadow: var(--shadow-xl);
-  margin-bottom: var(--spacing-lg);
-  transition: transform 0.3s ease;
-}
+/* .roulette-wheel replaced by dynamic SVG in Roulette.js */
 
 .roulette-wheel.spinning {
   animation: spin 2s ease-out;
