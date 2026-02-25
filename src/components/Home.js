@@ -6,7 +6,7 @@ import {
   Users, 
   Trophy, 
   TrendingUp,
-  Zap
+  Zap,
   Medal
 } from 'lucide-react';
 import { getRandomSkills, getRecentActivity, getLeaderboard, trackEvent } from '../firebase';
