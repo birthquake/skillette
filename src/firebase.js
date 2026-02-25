@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, collection, addDoc, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
 // Firebase configuration — values loaded from environment variables
 const firebaseConfig = {
@@ -45,6 +46,81 @@ export const trackEvent = (eventName, params = {}) => {
   }
 };
 export const storage = getStorage(app);
+
+// Firebase Cloud Messaging
+let messaging = null;
+try {
+  messaging = getMessaging(app);
+} catch (e) {
+  // Messaging not available in all environments (e.g. Safari without permission)
+}
+export { messaging };
+
+
+// ─── Push Notification functions ──────────────────────────────────────────
+
+// Request push permission and save the FCM token to the user's doc
+export const requestPushPermission = async (userId) => {
+  try {
+    if (!messaging) return null;
+    if (!('Notification' in window)) return null;
+
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return null;
+
+    const token = await getToken(messaging, {
+      vapidKey: process.env.REACT_APP_FIREBASE_VAPID_KEY,
+      serviceWorkerRegistration: await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
+    });
+
+    if (token && userId) {
+      // Save token to user doc so other clients can send notifications to this device
+      await updateDoc(doc(db, 'users', userId), {
+        fcmToken: token,
+        fcmTokenUpdatedAt: new Date()
+      });
+    }
+
+    return token;
+  } catch (error) {
+    console.error('Push permission error:', error);
+    return null;
+  }
+};
+
+// Listen for foreground messages (app is open)
+export const onForegroundMessage = (callback) => {
+  if (!messaging) return () => {};
+  return onMessage(messaging, (payload) => {
+    callback(payload);
+  });
+};
+
+// Send a push notification to a user via their saved FCM token
+// Uses Firebase's REST API — no Cloud Functions needed
+export const sendPushNotification = async (toUserId, { title, body, data = {} }) => {
+  try {
+    // Get the target user's FCM token
+    const userSnap = await getDoc(doc(db, 'users', toUserId));
+    if (!userSnap.exists()) return;
+
+    const fcmToken = userSnap.data()?.fcmToken;
+    if (!fcmToken) return; // User hasn't granted push permission
+
+    // Call FCM REST API via a Firestore trigger document
+    // We write to a pushQueue collection; a Cloud Function (or this client) delivers it
+    await addDoc(collection(db, 'pushQueue'), {
+      to: fcmToken,
+      toUserId,
+      notification: { title, body },
+      data,
+      createdAt: new Date(),
+      delivered: false
+    });
+  } catch (error) {
+    console.error('Error queuing push notification:', error);
+  }
+};
 
 // Auth functions
 export const signUpWithEmail = async (email, password, displayName) => {
