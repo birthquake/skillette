@@ -20,7 +20,7 @@ const DIFFICULTIES = ['All', 'Easy', 'Medium', 'Hard'];
 const getDifficultyColor = (d) =>
   ({ Easy: '#4ecdc4', Medium: '#f5a623', Hard: '#ff6b6b' }[d] || '#8b8fa8');
 
-function SkillSearchScreen({ onNavigate }) {
+function SkillSearchScreen({ onNavigate, onViewSkill }) {
   const { currentUser } = useAuth();
   const [allSkills, setAllSkills]       = useState([]);
   const [loading, setLoading]           = useState(true);
@@ -185,7 +185,7 @@ function SkillSearchScreen({ onNavigate }) {
       ) : (
         <div className="stagger-children">
           {filtered.map(skill => (
-            <div key={skill.id} className="card card-interactive" style={{ marginBottom: '10px' }}>
+            <div key={skill.id} className="card card-interactive" onClick={() => onViewSkill && onViewSkill(skill.id)} style={{ marginBottom: '10px', cursor: 'pointer' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <div style={{ width: '52px', height: '52px', background: '#252838', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0, border: '1px solid rgba(255,255,255,0.07)' }}>
                   {skill.thumbnail}
