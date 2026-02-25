@@ -621,6 +621,75 @@ export const getSkillById = async (skillId) => {
     return null;
   }
 };
+
+// ─── Rating functions ──────────────────────────────────────────────────────
+
+export const submitRating = async ({ raterId, skillId, skillTitle, teacherId, matchId, skillRating, teacherRating, comment }) => {
+  try {
+    // Write the rating document
+    const ratingRef = await addDoc(collection(db, 'ratings'), {
+      raterId,
+      skillId,
+      skillTitle,
+      teacherId,
+      matchId: matchId || null,
+      skillRating,
+      teacherRating: teacherRating || null,
+      comment: comment || null,
+      createdAt: new Date(),
+    });
+
+    // Update skill's aggregate rating
+    if (skillId) {
+      const skillRef = doc(db, 'skills', skillId);
+      const skillSnap = await getDoc(skillRef);
+      if (skillSnap.exists()) {
+        const data = skillSnap.data();
+        const prevCount = data.ratingCount || 0;
+        const prevAvg   = data.rating || 0;
+        const newCount  = prevCount + 1;
+        const newAvg    = parseFloat(((prevAvg * prevCount + skillRating) / newCount).toFixed(1));
+        await updateDoc(skillRef, { rating: newAvg, ratingCount: newCount });
+      }
+    }
+
+    // Update teacher's aggregate rating
+    if (teacherId && teacherRating) {
+      const teacherRef = doc(db, 'users', teacherId);
+      const teacherSnap = await getDoc(teacherRef);
+      if (teacherSnap.exists()) {
+        const data = teacherSnap.data();
+        const prevCount = data.teacherRatingCount || 0;
+        const prevAvg   = data.teacherRating || 0;
+        const newCount  = prevCount + 1;
+        const newAvg    = parseFloat(((prevAvg * prevCount + teacherRating) / newCount).toFixed(1));
+        await updateDoc(teacherRef, { teacherRating: newAvg, teacherRatingCount: newCount });
+      }
+    }
+
+    return { success: true, id: ratingRef.id };
+  } catch (error) {
+    console.error('Error submitting rating:', error);
+    return { success: false };
+  }
+};
+
+export const getSkillRatings = async (skillId, limitNum = 10) => {
+  try {
+    const q = query(
+      collection(db, 'ratings'),
+      where('skillId', '==', skillId),
+      orderBy('createdAt', 'desc'),
+      limit(limitNum)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (error) {
+    console.error('Error getting ratings:', error);
+    return [];
+  }
+};
+
 // Admin functions
 export const getAdminData = async () => {
   try {
