@@ -13,7 +13,7 @@ import {
   X,
   Play
 } from 'lucide-react';
-import { createSkill, uploadVideo } from '../firebase';
+import { createSkill, uploadVideo, trackEvent } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import VideoRecorder from './VideoRecorder';
 
@@ -165,6 +165,8 @@ function AddSkillScreen({ onNavigate, onSkillAdded }) {
       if (result.success) {
         await incrementSkillsTaught();
         setSubmitSuccess(true);
+      trackEvent('skill_added', { category: formData.category, difficulty: formData.difficulty });
+      trackEvent('skill_added', { category: formData.category, difficulty: formData.difficulty });
         if (onSkillAdded) onSkillAdded(result.skill);
       } else {
         setSubmitError('Something went wrong. Please try again.');
