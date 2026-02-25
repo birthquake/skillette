@@ -28,7 +28,6 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [matchedUser, setMatchedUser] = useState(null);
-  const [matchId, setMatchId] = useState(null);
   const [teacherId, setTeacherId] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState('');
@@ -74,7 +73,6 @@ function ChallengeScreen({ challenge, onComplete, onAbandon, onExpire, onNavigat
       try {
         const match = await getMatchByChallenge(challenge.id);
         if (match) {
-          setMatchId(match.id);
           setTeacherId(match.teacherId);
           const teacherData = await getUserData(match.teacherId);
           if (teacherData) {
