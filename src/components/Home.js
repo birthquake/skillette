@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   RotateCcw, 
   Camera, 
@@ -8,7 +8,9 @@ import {
   TrendingUp,
   Zap
 } from 'lucide-react';
-import { getRandomSkills, getRecentActivity } from '../firebase';
+import { getRandomSkills, getRecentActivity, trackEvent } from '../firebase';
+import { usePullToRefresh } from './usePullToRefresh';
+import PullToRefreshIndicator from './PullToRefreshIndicator';
 import { SkillCardSkeleton } from './Skeleton';
 import ErrorBanner from './ErrorBanner';
 import { useAuth } from '../contexts/AuthContext';
@@ -24,6 +26,13 @@ function HomeScreen({ user, onNavigate }) {
   const [activityError, setActivityError] = useState('');
   const [skillsError, setSkillsError] = useState('');
   const [retryCount, setRetryCount] = useState(0);
+
+  const handleRefresh = useCallback(async () => {
+    setRetryCount(c => c + 1);
+    trackEvent('pull_to_refresh', { screen: 'home' });
+  }, []);
+
+  const { isRefreshing, pullDistance, handlers } = usePullToRefresh(handleRefresh);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -106,7 +115,8 @@ function HomeScreen({ user, onNavigate }) {
   const dailyProgressPercent = Math.round((dailyProgress / dailyGoal) * 100);
 
   return (
-    <div className="fade-in" style={{ paddingTop: '20px', paddingBottom: '20px' }}>
+    <div {...handlers} style={{ paddingTop: '20px', paddingBottom: '20px' }}>
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
 
       {/* Welcome Section */}
       <div className="card fade-in">
