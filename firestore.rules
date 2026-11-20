@@ -1,0 +1,109 @@
+rules_version = '2';
+
+// Skillette Firestore rules.
+// NOTE: XP, level and streak are still calculated in the app, so a determined
+// user could change their own numbers. Closing that gap needs Cloud Functions.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // True if the only fields changed are in the allowed list
+    function onlyChanges(allowed) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed);
+    }
+
+    // Users: any signed-in user can read profiles (leaderboard, teacher info).
+    // You can only create/edit your own. Others may only update rating fields.
+    match /users/{userId} {
+      allow read: if signedIn();
+      allow create: if isOwner(userId) && request.resource.data.uid == userId;
+      allow update: if (isOwner(userId) && request.resource.data.uid == resource.data.uid)
+                    || (signedIn() && onlyChanges(['teacherRating', 'teacherRatingCount']));
+      allow delete: if false;
+    }
+
+    // Skills: readable by signed-in users; only the owner creates/edits/deletes.
+    // Others may only update the rating fields (when rating after a challenge).
+    match /skills/{skillId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if (isOwner(resource.data.userId) && request.resource.data.userId == resource.data.userId)
+                    || (signedIn() && onlyChanges(['rating', 'ratingCount']));
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // Challenges: private to the person who started them.
+    match /challenges/{challengeId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isOwner(resource.data.userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if false;
+    }
+
+    // Matches: any signed-in user can look one up (the app searches by challenge),
+    // but only the learner or teacher can change it.
+    match /matches/{matchId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.learnerId == request.auth.uid;
+      allow update: if signedIn() &&
+                    (resource.data.learnerId == request.auth.uid ||
+                     resource.data.teacherId == request.auth.uid);
+      allow delete: if false;
+    }
+
+    // Notifications: anyone signed in can send one to someone else, but only
+    // the recipient can read it, and they can only mark it as read.
+    match /notifications/{notificationId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if signedIn() && request.resource.data.userId is string
+                    && request.resource.data.read == false;
+      allow update: if isOwner(resource.data.userId) && onlyChanges(['read']);
+      allow delete: if false;
+    }
+
+    // Push queue: write-only from the app. A server/Cloud Function reads it.
+    match /pushQueue/{id} {
+      allow create: if signedIn();
+      allow read, update, delete: if false;
+    }
+
+    // Reports: anyone signed in can file one; only admins can see or resolve.
+    match /reports/{reportId} {
+      allow create: if signedIn()
+                    && request.resource.data.reportedBy == request.auth.uid
+                    && request.resource.data.status == 'pending';
+      allow read, update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // Ratings: readable by signed-in users; you can only post as yourself.
+    match /ratings/{ratingId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.raterId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Admin list: managed by hand in the Firebase console only.
+    match /admins/{id} {
+      allow read, write: if false;
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

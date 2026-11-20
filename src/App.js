@@ -103,6 +103,7 @@ function AppContent() {
         if (saved) {
           // Convert Firestore timestamps back to plain objects
           const restored = {
+            id: saved.id,
             skill: saved.skill,
             startTime: saved.startTime?.toDate
               ? saved.startTime.toDate()
@@ -131,13 +132,6 @@ function AppContent() {
 
     restoreChallenge();
   }, [isAuthenticated, currentUser]);
-
-  // Handle deep links — read ?skill= param on mount
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const skillId = params.get('skill');
-    if (skillId) setDeepLinkSkillId(skillId);
-  }, []);
 
   // Handle deep links — read ?skill= param on mount
   useEffect(() => {
@@ -178,6 +172,9 @@ function AppContent() {
 
       if (challengeId) {
         setCurrentChallengeId(challengeId);
+        // Put the id on the challenge object too, so the Challenge screen
+        // can look up the match and notify the teacher
+        setCurrentChallenge(prev => (prev ? { ...prev, id: challengeId } : prev));
         // Look up any match linked to this challenge
         const match = await getMatchByChallenge(challengeId);
         if (match) setCurrentMatchId(match.id);
